@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+
+{% block title %}Ajouter une dépense liée à un examen{% endblock %}
+
+{% block content %}
+<h1>Ajouter une dépense liée à un examen</h1>
+
+<form method="post" style="max-width: 600px; margin-top: 20px;">
+    <div style="margin-bottom: 20px;">
+        <label for="nom_cours" style="font-weight: bold;">Cours <span style="color: #f44336;">*</span></label><br>
+        <input type="text" id="nom_cours" name="nom_cours" required 
+               style="width: 100%; padding: 8px; font-size: 1em;" 
+               value="{{ request.form.get('nom_cours', '') }}">
+    </div>
+
+    <div style="margin-bottom: 20px;">
+        <label for="date_examen" style="font-weight: bold;">Date examen <span style="color: #f44336;">*</span></label><br>
+        <input type="date" id="date_examen" name="date_examen" required 
+               style="width: 100%; padding: 8px; font-size: 1em;" 
+               value="{{ request.form.get('date_examen', '') }}">
+    </div>
+
+    <div style="margin-bottom: 20px;">
+        <label for="categorie" style="font-weight: bold;">Catégorie dépense <span style="color: #f44336;">*</span></label><br>
+        <select id="categorie" name="categorie" required 
+                style="width: 100%; padding: 8px; font-size: 1em;">
+            <option value="" disabled {% if not request.form.get('categorie') %}selected{% endif %}>-- Sélectionnez une catégorie --</option>
+            {% for cat in categories %}
+                <option value="{{ cat }}" {% if cat == request.form.get('categorie') %}selected{% endif %}>{{ cat }}</option>
+            {% endfor %}
+        </select>
+    </div>
+
+    <div id="categorie-autre-div" style="margin-bottom: 20px; {% if request.form.get('categorie') != 'Autre' %}display:none;{% endif %}">
+        <label for="categorie_autre" style="font-weight: bold;">Catégorie nouvelle (si "Autre") <span style="color: #f44336;">*</span></label><br>
+        <input type="text" id="categorie_autre" name="categorie_autre" 
+               value="{{ request.form.get('categorie_autre', '') }}"
+               style="width: 100%; padding: 8px; font-size: 1em;">
+    </div>
+
+    <div style="margin-bottom: 20px;">
+        <label for="description" style="font-weight: bold;">Description</label><br>
+        <input type="text" id="description" name="description" 
+               value="{{ request.form.get('description', '') }}"
+               style="width: 100%; padding: 8px; font-size: 1em;">
+    </div>
+
+    <div style="margin-bottom: 20px;">
+        <label for="montant" style="font-weight: bold;">Montant (USD) <span style="color: #f44336;">*</span></label><br>
+        <input type="number" step="0.01" min="0.01" id="montant" name="montant" required 
+               value="{{ request.form.get('montant', '') }}"
+               style="width: 100%; padding: 8px; font-size: 1em;">
+    </div>
+
+    <button type="submit" style="background-color: #4CAF50; border:none; color:white; padding: 10px 25px; font-size: 1em; border-radius: 4px; cursor: pointer;">
+        Enregistrer
+    </button>
+</form>
+
+<p style="margin-top: 15px;">
+    <a href="{{ url_for('main.index') }}" style="color: #036; text-decoration: underline;">← Retour à l'accueil</a>
+</p>
+
+<script>
+    function toggleCategorieAutre() {
+        var select = document.getElementById("categorie");
+        var autreDiv = document.getElementById("categorie-autre-div");
+        if (select.value === "Autre") {
+            autreDiv.style.display = "block";
+            document.getElementById("categorie_autre").setAttribute("required", "required");
+        } else {
+            autreDiv.style.display = "none";
+            document.getElementById("categorie_autre").removeAttribute("required");
+            document.getElementById("categorie_autre").value = "";
+        }
+    }
+
+    window.onload = function() {
+        toggleCategorieAutre();
+        document.getElementById("categorie").addEventListener("change", toggleCategorieAutre);
+    };
+</script>
+{% endblock %}

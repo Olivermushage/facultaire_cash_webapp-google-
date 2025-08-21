@@ -1,0 +1,8 @@
+Pour test sans packaging :
+python app.py
+
+pyinstaller --noconfirm --clean --onefile --add-data "templates;templates" --add-data "static;static" --add-data "data;data" app.py
+
+et avec Powersheel : 
+python -m PyInstaller --noconfirm --clean --onefile --add-data "templates;templates" --add-data "static;static" --add-data "data;data" app.py
+

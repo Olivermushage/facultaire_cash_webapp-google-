@@ -1,0 +1,22 @@
+[
+  {
+    "username": "gracemuhiwa",
+    "password": "pbkdf2:sha256:1000000$uP3GjHFuc9OzttnR$7bc6abd45124ce05d17686ed1d90877339b8021855810cb8f3cf1664623ac78b",
+    "role": "user"
+  },
+  {
+    "username": "johnsonik",
+    "password": "pbkdf2:sha256:1000000$O8LXywN99DFLxSby$fa9e1496d8224f366afbe45389d01c94e00fae48f1c38e152a1c33c3422db655",
+    "role": "user"
+  },
+  {
+    "username": "alexkim",
+    "password": "pbkdf2:sha256:1000000$JBXylaLlE81yux9Y$25d638344dab8e88bb1e14c47196bfebe3a3730a08e861b6d52de3d5336f2963",
+    "role": "user"
+  },
+  {
+    "username": "admin",
+    "password": "pbkdf2:sha256:1000000$9Kmjyw0LqBX5zzff$5dd05e8e41d638ee63f0d79d34dbf593bd258168b03c57c42d33089e56c737ce",
+    "role": "admin"
+  }
+]

@@ -1,0 +1,116 @@
+{% extends "base.html" %}
+
+{% block title %}Ajouter une dépense liée aux travaux - {{ nom_classe }}{% endblock %}
+
+{% block content %}
+<h2>Ajouter une dépense pour un travail - Classe {{ nom_classe }}</h2>
+
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    <div class="flash-container">
+      {% for category, message in messages %}
+        <div class="flash-message
+            {% if category == 'success' %}flash-success{% endif %}
+            {% if category == 'error' %}flash-error{% endif %}
+            {% if category == 'warning' %}flash-warning{% endif %}
+            {% if category == 'info' %}flash-info{% endif %}">
+          {{ message }}
+          <button class="flash-close-btn" onclick="this.parentElement.style.display='none';">×</button>
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+{% endwith %}
+
+<!-- Recherche étudiant -->
+<form method="get" class="form-inline" style="margin-bottom: 18px;">
+  <input type="text" name="recherche" value="{{ request.args.get('recherche', '') }}"
+         placeholder="Rechercher un étudiant..." class="input-inline">
+  <button type="submit" class="btn-primary">Filtrer</button>
+  {% if request.args.get('recherche') %}
+    <a href="{{ url_for('classes.ajouter_depense_travail', nom_classe=nom_classe) }}" class="btn-link">Réinitialiser</a>
+  {% endif %}
+</form>
+
+<form method="post" class="form-default">
+
+  <label for="etudiant" class="label-default">Étudiant <span class="text-danger">*</span></label>
+  <select id="etudiant" name="etudiant" required class="input-default">
+    <option value="" disabled {% if not etudiant_selectionne %}selected{% endif %}>-- Choisissez un étudiant --</option>
+    {% for etu in etudiants %}
+      <option value="{{ etu }}" {% if etu == etudiant_selectionne %}selected{% endif %}>{{ etu }}</option>
+    {% endfor %}
+  </select>
+
+  <label for="categorie_travail" class="label-default">Catégorie de travail <span class="text-danger">*</span></label>
+  <select id="categorie_travail" name="categorie_travail" required class="input-default">
+    <option value="" disabled {% if not categorie_selectionnee %}selected{% endif %}>-- Choisissez une catégorie --</option>
+    {% for cat in categories %}
+      <option value="{{ cat }}" {% if cat == categorie_selectionnee %}selected{% endif %}>{{ cat }}</option>
+    {% endfor %}
+  </select>
+
+  <label for="depense" id="label_commentaire_select" class="label-default">Dépense <span class="text-danger">*</span></label>
+  <select id="depense" name="depense" required class="input-default">
+    <option value="" disabled selected>-- Choisissez une dépense --</option>
+  </select>
+
+  <label for="commentaire" id="label_commentaire" class="label-default">Commentaire <span class="text-danger">*</span></label>
+  <input type="text" id="commentaire" name="commentaire" value="{{ commentaire_valeur or '' }}" required class="input-default">
+
+  <label for="date_depense" class="label-default">Date de la dépense <span class="text-danger">*</span></label>
+  <input type="date" id="date_depense" name="date_depense" value="{{ date_depense_valeur or '' }}" required class="input-default">
+
+  <label for="montant" class="label-default">Montant (USD) <span class="text-danger">*</span></label>
+  <input type="number" id="montant" name="montant" step="0.01" min="0.01" value="{{ montant_valeur or '' }}" required class="input-default">
+
+  <div class="form-actions">
+    <a href="{{ url_for('classes.detail_classe', nom_classe=nom_classe) }}" class="btn-link">← Retour à la classe</a>
+    <button type="submit" class="btn-success">Ajouter la dépense</button>
+  </div>
+</form>
+
+<script>
+const categoriesTravaux = {{ CATEGORIES_TRAVAUX|tojson }};
+
+const selectCategorie = document.getElementById('categorie_travail');
+const selectDepense = document.getElementById('depense');
+const labelCommentaire = document.getElementById('label_commentaire');
+
+function populateDepenses() {
+  const cat = selectCategorie.value;
+  selectDepense.innerHTML = '';
+  if(cat && categoriesTravaux[cat]) {
+    categoriesTravaux[cat].forEach(depense => {
+      const opt = document.createElement('option');
+      opt.value = depense.nom;
+      opt.textContent = depense.nom;
+      selectDepense.appendChild(opt);
+    });
+    {% if depense_selectionnee %}
+      selectDepense.value = "{{ depense_selectionnee }}";
+    {% endif %}
+    updateLabelCommentaire();
+  } else {
+    selectDepense.innerHTML = '<option value="" disabled selected>-- Choisissez une dépense --</option>';
+    labelCommentaire.textContent = "Commentaire *";
+  }
+}
+
+function updateLabelCommentaire() {
+  const cat = selectCategorie.value;
+  const dep = selectDepense.value;
+  if(cat && dep) {
+    const depenseObj = categoriesTravaux[cat].find(d => d.nom === dep);
+    labelCommentaire.textContent = depenseObj && depenseObj.commentaire_label ? depenseObj.commentaire_label + " *" : "Commentaire *";
+  } else {
+    labelCommentaire.textContent = "Commentaire *";
+  }
+}
+
+selectCategorie.addEventListener('change', populateDepenses);
+selectDepense.addEventListener('change', updateLabelCommentaire);
+
+document.addEventListener('DOMContentLoaded', populateDepenses);
+</script>
+{% endblock %}

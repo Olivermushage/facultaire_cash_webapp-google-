@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+
+{% block title %}Dépenses{% endblock %}
+
+{% block content %}
+<h1>Dépenses</h1>
+
+<div class="links-section">
+    <p>
+        <a href="{{ url_for('depenses.choisir_classe_depenses_examen') }}" class="link-default">
+            Voir les dépenses liées aux examens
+        </a>
+    </p>
+
+    <p>
+        <a href="{{ url_for('depenses.liste_depenses_autres') }}" class="link-default">
+            Voir les autres dépenses
+        </a>
+    </p>
+
+    <p>
+        <a href="{{ url_for('depenses.ajouter_depense_autres') }}" class="btn-primary">
+            + Ajouter une autre dépense
+        </a>
+    </p>
+</div>
+{% endblock %}

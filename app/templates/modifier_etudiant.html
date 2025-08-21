@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+
+{% block title %}Modifier l'étudiant {{ ancien_nom }}{% endblock %}
+
+{% block content %}
+<h1>Modifier l'étudiant {{ ancien_nom }}</h1>
+
+<!-- Messages flash -->
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    <div class="flash-container">
+      {% for category, message in messages %}
+        <div class="flash-message flash-{{ category }}" role="alert">
+          {{ message }}
+          <button type="button" aria-label="Fermer le message" class="flash-close-btn"
+                  onclick="this.parentElement.style.display='none';">&times;</button>
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+{% endwith %}
+
+<!-- Formulaire de modification -->
+<form method="post" class="formulaire-modification" aria-label="Formulaire de modification de l'étudiant">
+    <div class="form-group">
+        <label for="nom">Nom de l'étudiant <span class="required">*</span></label>
+        <input type="text" id="nom" name="nom" required
+               value="{{ request.form.get('nom', ancien_nom) }}"
+               aria-required="true" class="input-text">
+    </div>
+
+    <div class="form-group">
+        <label for="commentaire">Commentaire</label>
+        <textarea id="commentaire" name="commentaire" rows="4"
+                  placeholder="Ajouter un commentaire optionnel"
+                  class="textarea-text">{{ request.form.get('commentaire', commentaire)|e }}</textarea>
+    </div>
+
+    <div class="form-actions">
+        <a href="{{ url_for('classes.detail_classe', nom_classe=nom_classe) }}" class="link-annuler">Annuler</a>
+        <button type="submit" class="btn-submit">Modifier</button>
+    </div>
+</form>
+{% endblock %}

@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+
+{% block title %}{{ titre }}{% endblock %}
+
+{% block content %}
+<h1>{{ titre }}</h1>
+
+<!-- Messages flash -->
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    <div class="flash-container">
+      {% for category, message in messages %}
+        <div class="flash-message flash-{{ category }}" role="alert">
+          {{ message }}
+          <button type="button" aria-label="Fermer le message" class="flash-close-btn"
+                  onclick="this.parentElement.style.display='none';">&times;</button>
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+{% endwith %}
+
+<!-- Formulaire de recherche -->
+<form method="get" class="form-recherche" aria-label="Formulaire de recherche des recettes">
+    <input type="search" name="recherche" value="{{ request.args.get('recherche', '') }}"
+           placeholder="Rechercher par description, source ou type..." 
+           aria-describedby="rechercheHelp" class="input-recherche">
+    <button type="submit" class="btn-filtrer" aria-label="Filtrer la liste des recettes">Filtrer</button>
+    {% if request.args.get('recherche') %}
+        <a href="{{ url_for(request.endpoint) }}" class="link-reset">Réinitialiser</a>
+    {% endif %}
+    <div id="rechercheHelp" class="help-text">Filtrez la liste des recettes par description, source ou type.</div>
+</form>
+
+<!-- Tableau des recettes -->
+<div class="table-scroll">
+<table class="table-default" role="table" aria-describedby="descriptionTable">
+    <caption id="descriptionTable" class="table-caption">
+      Liste des recettes filtrées par critères.
+    </caption>
+    <thead>
+        <tr>
+            <th scope="col">Date</th>
+            <th scope="col">Source</th>
+            <th scope="col">Type</th>
+            <th scope="col">Description</th>
+            <th scope="col">Utilisateur</th>
+            <th scope="col" class="montant">Montant (USD)</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for recette in recettes %}
+        <tr>
+            <td>{{ recette.Date or '-' }}</td>
+            <td>{{ recette.Source or '-' }}</td>
+            <td>{{ recette.Type or '-' }}</td>
+            <td>{{ recette.Description or '-' }}</td>
+            <td>{{ recette.utilisateur or '-' }}</td>
+            <td class="montant">{{ "%.2f"|format(recette.Montant) }} USD</td>
+        </tr>
+        {% else %}
+        <tr>
+            <td colspan="6" class="aucun-result">Aucune recette enregistrée.</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+</div>
+
+<!-- Pagination -->
+<nav class="pagination" role="navigation" aria-label="Pagination des recettes">
+    {% if page > 1 %}
+        <a href="{{ url_for(request.endpoint, page=page-1, recherche=request.args.get('recherche','')) }}" class="page-link" aria-label="Page précédente">&laquo; Précédent</a>
+    {% else %}
+        <span class="page-disabled" aria-disabled="true">&laquo; Précédent</span>
+    {% endif %}
+    <span class="page-info" aria-live="polite">Page {{ page }} sur {{ total_pages }}</span>
+    {% if page < total_pages %}
+        <a href="{{ url_for(request.endpoint, page=page+1, recherche=request.args.get('recherche','')) }}" class="page-link" aria-label="Page suivante">Suivant &raquo;</a>
+    {% else %}
+        <span class="page-disabled" aria-disabled="true">Suivant &raquo;</span>
+    {% endif %}
+</nav>
+
+<!-- Lien de retour vers la page centrale Recettes -->
+<p class="back-link">
+  <a href="{{ url_for('recettes.index_recettes') }}">← Retour aux recettes</a>
+</p>
+{% endblock %}

@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{% block title %}ULPGL Application{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <a href="#main-content" class="skip-link">Passer au contenu</a>
+
+    <div class="topbar">
+        <a href="{{ url_for('auth.logout') }}" class="logout-button" tabindex="0" role="button">Déconnexion</a>
+    </div>
+
+    <div class="container">
+        <nav aria-label="Navigation principale" role="navigation">
+            <a href="{{ url_for('main.index') }}">
+                <img src="{{ url_for('static', filename='ulpgl-logo.png') }}" alt="Logo ULPGL">
+            </a>
+
+            <div class="menu-section">
+                <h3 class="menu-header" tabindex="0" role="button" aria-expanded="false" aria-controls="general-menu">Général</h3>
+                <div class="menu-items" id="general-menu" hidden>
+                    <a href="{{ url_for('main.index') }}">Accueil</a>
+                    <a href="{{ url_for('classes.liste_classes') }}">Classes</a>
+                    <a href="{{ url_for('main.historique') }}">Historique</a>
+                    <a href="{{ url_for('classes.creer_classe') }}">Nouvelle classe</a>
+                </div>
+            </div>
+
+            <div class="menu-section">
+                <h3 class="menu-header" tabindex="0" role="button" aria-expanded="false" aria-controls="paiements-menu">Paiements & Catégories</h3>
+                <div class="menu-items" id="paiements-menu" hidden>
+                    <a href="{{ url_for('categories.gerer_categories') }}">Gestion catégories paiement</a>
+                </div>
+            </div>
+
+            <div class="menu-section">
+                <h3 class="menu-header" tabindex="0" role="button" aria-expanded="false" aria-controls="recettes-menu">Recettes</h3>
+                <div class="menu-items" id="recettes-menu" hidden>
+                    <a href="{{ url_for('recettes.ajouter_recette') }}">Ajouter une recette</a>
+                    <a href="{{ url_for('recettes.index_recettes') }}">Voir toutes les recettes</a>
+                </div>
+            </div>
+
+            <div class="menu-section">
+                <h3 class="menu-header" tabindex="0" role="button" aria-expanded="false" aria-controls="depenses-menu">Dépenses</h3>
+                <div class="menu-items" id="depenses-menu" hidden>
+                    <a href="{{ url_for('depenses.depenses_index') }}">Vue globale des dépenses</a>
+                    <a href="{{ url_for('depenses.ajouter_depense_autres') }}">Ajouter une autre dépense</a>
+                </div>
+            </div>
+
+            {% if current_user.is_authenticated and current_user.role == 'admin' %}
+            <a href="{{ url_for('auth.create_user_route') }}" class="menu-item" style="margin-top: 10px; padding: 8px 12px; color: white; font-weight: bold; border-radius: 4px; background-color: var(--info-color); display: block; text-align: center;">Créer un utilisateur</a>
+            {% endif %}
+        </nav>
+
+        <main id="main-content">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    <div>
+                        {% for category, message in messages %}
+                        <div class="flash-message
+                            {% if category == 'success' %}flash-success{% endif %}
+                            {% if category == 'error' %}flash-error{% endif %}
+                            {% if category == 'warning' %}flash-warning{% endif %}
+                            {% if category == 'info' %}flash-info{% endif %}">
+                            {{ message }}
+                            <button class="flash-close-btn" aria-label="Fermer le message" onclick="this.parentElement.style.display='none';">×</button>
+                        </div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            {% endwith %}
+
+            {% block content %}{% endblock %}
+        </main>
+    </div>
+
+    <footer>© 2025 ULPGL - Tous droits réservés</footer>
+
+    <script>
+      // Collapsible menu
+      document.querySelectorAll('.menu-header').forEach(header => {
+        const menuItems = header.nextElementSibling;
+        header.addEventListener('click', () => {
+          const expanded = header.getAttribute('aria-expanded') === 'true';
+          header.setAttribute('aria-expanded', !expanded);
+          if(menuItems) menuItems.toggleAttribute('hidden');
+        });
+        header.addEventListener('keydown', e => { if(e.key==='Enter'||e.key===' ') { e.preventDefault(); header.click(); } });
+      });
+
+      // Flash message auto fade
+      document.querySelectorAll('.flash-message').forEach(msg => {
+        setTimeout(() => { msg.style.opacity = '0'; setTimeout(()=>{msg.style.display='none';}, 500); }, 5000);
+      });
+    </script>
+</body>
+</html>

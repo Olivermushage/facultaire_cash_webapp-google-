@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+
+{% block title %}Liste des classes{% endblock %}
+
+{% block content %}
+<h1>Liste des classes</h1>
+
+<!-- Recherche -->
+<form method="get" class="form-recherche">
+    <input type="text" name="recherche" value="{{ request.args.get('recherche', '') }}" 
+           placeholder="Rechercher une classe..." class="input-recherche">
+    <button type="submit" class="btn-filtrer">Filtrer</button>
+    {% if request.args.get('recherche') %}
+        <a href="{{ url_for('classes.liste_classes') }}" class="lien-reset">Réinitialiser</a>
+    {% endif %}
+</form>
+
+{% if classes %}
+    <ul class="liste-classes">
+        {% for classe in classes %}
+            <li>
+                <a href="{{ url_for('classes.detail_classe', nom_classe=classe) }}" class="lien-classe">
+                    {{ classe }}
+                </a>
+            </li>
+        {% endfor %}
+    </ul>
+
+    <!-- Pagination -->
+    <div class="pagination">
+        {% if page > 1 %}
+            <a href="{{ url_for('classes.liste_classes', page=page-1, recherche=request.args.get('recherche','')) }}" class="page-link">&laquo; Précédent</a>
+        {% else %}
+            <span class="page-disabled">&laquo; Précédent</span>
+        {% endif %}
+        <span>Page {{ page }} sur {{ total_pages }}</span>
+        {% if page < total_pages %}
+            <a href="{{ url_for('classes.liste_classes', page=page+1, recherche=request.args.get('recherche','')) }}" class="page-link">Suivant &raquo;</a>
+        {% else %}
+            <span class="page-disabled">Suivant &raquo;</span>
+        {% endif %}
+    </div>
+{% else %}
+    <p>Aucune classe trouvée.</p>
+{% endif %}
+
+<div class="action-creation">
+    <a href="{{ url_for('classes.creer_classe') }}" class="btn-ajouter">
+        Créer une nouvelle classe
+    </a>
+</div>
+{% endblock %}

@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+
+{% block title %}Connexion{% endblock %}
+
+{% block content %}
+<h1>Connexion</h1>
+
+<form method="post" novalidate class="form-login" style="max-width: 400px; margin-top: 20px;">
+    <div class="form-group">
+        <label for="username">Nom d'utilisateur</label>
+        <input type="text" id="username" name="username" required autofocus placeholder="Nom d'utilisateur">
+    </div>
+
+    <div class="form-group">
+        <label for="password">Mot de passe</label>
+        <input type="password" id="password" name="password" required placeholder="Mot de passe">
+    </div>
+
+    <div class="form-group">
+        <input type="checkbox" id="show-password">
+        <label for="show-password" style="cursor:pointer;">Voir le mot de passe</label>
+    </div>
+
+    <button type="submit" class="btn-submit">Se connecter</button>
+</form>
+
+<script>
+    // Toggle visibilité mot de passe
+    const checkbox = document.getElementById('show-password');
+    const passwordInput = document.getElementById('password');
+    checkbox.addEventListener('change', () => {
+        passwordInput.type = checkbox.checked ? 'text' : 'password';
+    });
+</script>
+{% endblock %}

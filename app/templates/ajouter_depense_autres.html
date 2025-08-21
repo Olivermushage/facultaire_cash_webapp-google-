@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+
+{% block title %}Ajouter une autre dépense{% endblock %}
+
+{% block content %}
+<h2>Ajouter une autre dépense</h2>
+
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    <div class="flash-container">
+      {% for category, message in messages %}
+        <div class="flash-message
+            {% if category == 'success' %}flash-success{% endif %}
+            {% if category == 'error' %}flash-error{% endif %}
+            {% if category == 'warning' %}flash-warning{% endif %}
+            {% if category == 'info' %}flash-info{% endif %}">
+          {{ message }}
+          <button class="flash-close-btn" aria-label="Fermer le message" onclick="this.parentElement.style.display='none';">×</button>
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+{% endwith %}
+
+<form method="post" action="{{ url_for('depenses.ajouter_depense_autres') }}" class="form-default">
+
+    <label for="categorie" class="label-default">
+        Catégorie <span class="text-danger">*</span>
+    </label>
+    <select id="categorie" name="categorie" required class="input-default">
+        <option value="" disabled {% if not request.form.get('categorie') %}selected{% endif %}>-- Sélectionnez une catégorie --</option>
+        {% for cat in categories %}
+            <option value="{{ cat }}" {% if cat == request.form.get('categorie') %}selected{% endif %}>{{ cat }}</option>
+        {% endfor %}
+    </select>
+    <small class="text-muted">Sélectionnez la catégorie adaptée.</small>
+
+    <label for="description" class="label-default">Description</label>
+    <input type="text" id="description" name="description" placeholder="Optionnel"
+           value="{{ request.form.get('description', '') }}" class="input-default">
+
+    <label for="montant" class="label-default">
+        Montant (USD) <span class="text-danger">*</span>
+    </label>
+    <input type="number" step="0.01" min="0.01" id="montant" name="montant" required
+           placeholder="Ex : 150.00" value="{{ request.form.get('montant', '') }}" class="input-default">
+    <small class="text-muted">Montant total dépensé.</small>
+
+    <div class="form-actions">
+        <a href="{{ url_for('depenses.depenses_index') }}" class="btn-link">Retour aux dépenses</a>
+        <button type="submit" class="btn-success">Enregistrer</button>
+    </div>
+
+    <div class="form-note">
+        <span class="text-danger">*</span> Champs obligatoires
+    </div>
+</form>
+{% endblock %}

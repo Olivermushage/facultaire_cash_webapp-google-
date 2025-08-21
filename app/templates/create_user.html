@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+
+{% block title %}Créer un utilisateur{% endblock %}
+
+{% block content %}
+<h1>Créer un utilisateur</h1>
+
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    <div class="flash-container">
+      {% for category, message in messages %}
+        <div class="flash-message flash-{{ category }}">
+          {{ message }}
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+{% endwith %}
+
+<form method="post" novalidate class="form-default">
+  <div class="form-group">
+    <label for="username" class="label-default">Nom d'utilisateur <span class="text-danger">*</span></label>
+    <input type="text" id="username" name="username" required placeholder="Nom d'utilisateur" class="input-default">
+  </div>
+
+  <div class="form-group">
+    <label for="password" class="label-default">Mot de passe <span class="text-danger">*</span></label>
+    <input type="password" id="password" name="password" required placeholder="Mot de passe" class="input-default">
+  </div>
+
+  <div class="form-group">
+    <label for="role" class="label-default">Rôle</label>
+    <select id="role" name="role" class="input-default">
+      <option value="user" selected>Utilisateur</option>
+      <option value="admin">Administrateur</option>
+    </select>
+  </div>
+
+  <div class="form-actions">
+    <button type="submit" class="btn-primary">Créer l'utilisateur</button>
+  </div>
+</form>
+{% endblock %}

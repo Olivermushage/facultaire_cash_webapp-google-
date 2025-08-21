@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+
+{% block title %}Ajouter une recette{% endblock %}
+
+{% block content %}
+<h1>Ajouter une recette</h1>
+
+<!-- Messages flash -->
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    <div class="flash-container" style="margin-bottom: 15px;">
+      {% for category, message in messages %}
+        <div class="flash-message flash-{{ category }}">
+          {{ message }}
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+{% endwith %}
+
+<form method="post" class="form-default">
+
+  <!-- Type de recette -->
+  <div class="form-group">
+    <label for="type_recette">Type de recette <span class="text-danger">*</span></label>
+    <select id="type_recette" name="type_recette" onchange="toggleFields()" required class="input-default">
+      <option value="" disabled {% if not type_recette_valeur %}selected{% endif %}>-- Choisissez un type --</option>
+      <option value="standard" {% if type_recette_valeur == 'standard' %}selected{% endif %}>Recette standard</option>
+      <option value="manuelle" {% if type_recette_valeur == 'manuelle' %}selected{% endif %}>Recette manuelle</option>
+    </select>
+    <small class="form-text">Sélectionnez le type de recette.</small>
+  </div>
+
+  <!-- Catégorie (visible seulement si "standard") -->
+  <div id="categorie_block" class="form-group" style="display: none;">
+    <label for="categorie">Catégorie <span class="text-danger">*</span></label>
+    <select id="categorie" name="categorie" class="input-default">
+      <option value="" disabled {% if not request.form.get('categorie') %}selected{% endif %}>-- Choisissez une catégorie --</option>
+      {% for cat in categories %}
+        <option value="{{ cat }}" {% if request.form.get('categorie') == cat %}selected{% endif %}>{{ cat }}</option>
+      {% endfor %}
+    </select>
+    <small class="form-text">Choisissez une catégorie définie dans le fichier Excel.</small>
+  </div>
+
+  <!-- Montant -->
+  <div class="form-group">
+    <label for="montant" class="label-default">
+      Montant (USD) <span class="text-danger">*</span>
+    </label>
+    <input type="number" id="montant" name="montant" step="0.01" min="0.01" required
+           value="{{ montant_valeur or '' }}" class="input-default">
+    <small class="form-text">Entrez le montant de la recette.</small>
+  </div>
+
+  <!-- Description (visible seulement si "manuelle") -->
+  <div class="form-group" id="description_block" style="display: none;">
+    <label for="description" class="label-default">Description</label>
+    <input type="text" id="description" name="description" class="input-default"
+           value="{{ description_valeur or '' }}" placeholder="Optionnel : détaillez la recette">
+    <small class="form-text">Ajoutez une description si nécessaire.</small>
+  </div>
+
+  <!-- Commentaire (toujours visible) -->
+  <div class="form-group">
+    <label for="commentaire" class="label-default">Commentaire</label>
+    <textarea id="commentaire" name="commentaire" rows="3" class="input-default"
+              placeholder="Ex : note interne, précision sur le paiement...">{{ commentaire_valeur or '' }}</textarea>
+    <small class="form-text">Ce champ est optionnel. Sert pour les remarques internes.</small>
+  </div>
+
+  <!-- Actions -->
+  <div class="form-actions">
+    <a href="{{ url_for('recettes.index_recettes') }}" class="btn-link">Annuler</a>
+    <button type="submit" class="btn-success">Ajouter</button>
+  </div>
+
+  <div class="form-note">
+    <span class="text-danger">*</span> Champs obligatoires
+  </div>
+
+</form>
+
+<script>
+function toggleFields() {
+  const type = document.getElementById("type_recette").value;
+  const catBlock = document.getElementById("categorie_block");
+  const descBlock = document.getElementById("description_block");
+
+  if (type === "standard") {
+    catBlock.style.display = "block";
+    descBlock.style.display = "none";
+  } else if (type === "manuelle") {
+    catBlock.style.display = "none";
+    descBlock.style.display = "block";
+  } else {
+    catBlock.style.display = "none";
+    descBlock.style.display = "none";
+  }
+}
+window.onload = toggleFields;
+</script>
+{% endblock %}

@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+
+{% block title %}Accueil - ULPGL{% endblock %}
+
+{% block content %}
+<h1>Bienvenue sur l'application de gestion de la caisse facultaire ULPGL</h1>
+
+<section class="dashboard-summary">
+    <h2>
+        Solde actuel : 
+        <span class="{{ 'solde-negatif' if solde <= 0 else 'solde-positif' }}">
+            {{ solde }} USD
+        </span>
+    </h2>
+
+    <div class="dashboard-cards">
+        <div class="card card-examen">
+            <strong>Dépenses liées aux examens</strong>
+            <p class="card-value">{{ total_depenses_examen }} USD</p>
+        </div>
+        <div class="card card-autres">
+            <strong>Autres dépenses</strong>
+            <p class="card-value">{{ total_depenses_autres }} USD</p>
+        </div>
+    </div>
+</section>
+
+<section class="classes-summary">
+    <h2>Classes et paiements par catégorie</h2>
+
+    {% for info in classes_info %}
+    <article class="classe-card">
+        <h3>{{ info.classe }} ({{ info.total_etudiants }} étudiants)</h3>
+        <ul>
+            {% for cat, count in info.paiements_par_categorie.items() %}
+            <li><strong>{{ cat }}</strong> : {{ count }} étudiants</li>
+            {% endfor %}
+        </ul>
+        <a href="{{ url_for('classes.detail_classe', nom_classe=info.classe) }}" class="btn-detail">Voir détails</a>
+    </article>
+    {% else %}
+    <p>Aucune classe enregistrée.</p>
+    {% endfor %}
+</section>
+{% endblock %}

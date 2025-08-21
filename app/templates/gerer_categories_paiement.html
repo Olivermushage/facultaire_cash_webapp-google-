@@ -1,0 +1,125 @@
+{% extends "base.html" %}
+
+{% block title %}Gestion des catégories de paiement et dépense{% endblock %}
+
+{% block content %}
+<h1>Gestion des catégories</h1>
+
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    {% for category, message in messages %}
+      <div class="flash-message flash-{{ category }}">{{ message }}</div>
+    {% endfor %}
+  {% endif %}
+{% endwith %}
+
+<section class="form-section">
+  <h2>Ajouter une nouvelle catégorie</h2>
+  <form method="post" class="form-default">
+    <input type="hidden" name="action" value="ajouter">
+
+    <label for="type_categorie_ajout">Type de catégorie <span class="required">*</span></label>
+    <select id="type_categorie_ajout" name="type_categorie" required class="select-default">
+      <option value="" disabled selected>-- Choisissez un type --</option>
+      <option value="paiement">Catégorie de paiement</option>
+      <option value="depense">Catégorie de dépense</option>
+    </select>
+
+    <label for="nouvelle_categorie">Nom de la catégorie <span class="required">*</span></label>
+    <input type="text" id="nouvelle_categorie" name="nouvelle_categorie" required class="input-default">
+
+    <button type="submit" class="btn-primary">Ajouter</button>
+  </form>
+</section>
+
+<section class="form-section">
+  <h2>Modifier une catégorie existante</h2>
+  <form method="post" class="form-default">
+    <input type="hidden" name="action" value="modifier">
+
+    <label for="type_categorie_modif">Type de catégorie <span class="required">*</span></label>
+    <select id="type_categorie_modif" name="type_categorie" required class="select-default" onchange="updateSelectAncienneCategorie()">
+      <option value="" disabled selected>-- Choisissez un type --</option>
+      <option value="paiement">Catégorie de paiement</option>
+      <option value="depense">Catégorie de dépense</option>
+    </select>
+
+    <label for="ancienne_categorie">Catégorie à modifier <span class="required">*</span></label>
+    <select id="ancienne_categorie" name="ancienne_categorie" required class="select-default">
+      <option value="" disabled selected>-- Sélectionnez une catégorie --</option>
+    </select>
+
+    <label for="nouvelle_categorie_modif">Nouveau nom <span class="required">*</span></label>
+    <input type="text" id="nouvelle_categorie_modif" name="nouvelle_categorie_modif" required class="input-default">
+
+    <button type="submit" class="btn-success">Modifier</button>
+  </form>
+</section>
+
+<section class="form-section">
+  <h2>Supprimer une catégorie</h2>
+  <form method="post" class="form-default">
+    <input type="hidden" name="action" value="supprimer">
+
+    <label for="type_categorie_suppr">Type de catégorie <span class="required">*</span></label>
+    <select id="type_categorie_suppr" name="type_categorie" required class="select-default" onchange="updateSelectCategorieSuppr()">
+      <option value="" disabled selected>-- Choisissez un type --</option>
+      <option value="paiement">Catégorie de paiement</option>
+      <option value="depense">Catégorie de dépense</option>
+    </select>
+
+    <label for="categorie_suppr">Catégorie à supprimer <span class="required">*</span></label>
+    <select id="categorie_suppr" name="categorie_suppr" required class="select-default">
+      <option value="" disabled selected>-- Sélectionnez une catégorie --</option>
+    </select>
+
+    <button type="submit" class="btn-danger"
+            onclick="return confirm('Voulez-vous vraiment supprimer cette catégorie ? Cette action est irréversible.');">
+      Supprimer
+    </button>
+  </form>
+</section>
+
+<p class="mt-40">
+  <a href="{{ url_for('main.index') }}" class="link-default">&laquo; Retour à l'accueil</a>
+</p>
+
+<script>
+const categoriesPaiement = {{ categories_paiement|tojson }};
+const categoriesDepense = {{ categories_depense|tojson }};
+
+function updateSelectAncienneCategorie() {
+  const type = document.getElementById("type_categorie_modif").value;
+  const select = document.getElementById("ancienne_categorie");
+  updateSelectOptions(select, type);
+}
+
+function updateSelectCategorieSuppr() {
+  const type = document.getElementById("type_categorie_suppr").value;
+  const select = document.getElementById("categorie_suppr");
+  updateSelectOptions(select, type);
+}
+
+function updateSelectOptions(selectElement, type) {
+  const firstOption = selectElement.options[0];
+  selectElement.innerHTML = "";
+  if (firstOption) selectElement.appendChild(firstOption);
+
+  let data = [];
+  if (type === "paiement") data = categoriesPaiement;
+  else if (type === "depense") data = categoriesDepense;
+
+  data.forEach(cat => {
+    const option = document.createElement("option");
+    option.value = cat;
+    option.textContent = cat;
+    selectElement.appendChild(option);
+  });
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  updateSelectAncienneCategorie();
+  updateSelectCategorieSuppr();
+});
+</script>
+{% endblock %}

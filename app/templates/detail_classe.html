@@ -1,0 +1,121 @@
+{% extends "base.html" %}
+
+{% block title %}Détail classe {{ nom_classe }}{% endblock %}
+
+{% block content %}
+<h1>Classe : {{ nom_classe }}</h1>
+
+<div class="actions-section">
+    <p>
+        <a href="{{ url_for('classes.ajouter_depense_travail', nom_classe=nom_classe) }}" class="btn-primary">
+            + Ajouter une dépense liée aux travaux des étudiants
+        </a>
+    </p>
+    <p>
+        <a href="{{ url_for('depenses.liste_depenses_examen', nom_classe=nom_classe) }}" class="link-default">
+            Voir les dépenses liées aux examens
+        </a>
+    </p>
+</div>
+
+<form method="get" class="form-inline" style="margin-bottom: 20px; max-width: 600px;">
+    <input type="text" name="recherche" value="{{ request.args.get('recherche', '') }}"
+           placeholder="Rechercher un étudiant..." class="input-default" style="flex-grow:1;">
+    <button type="submit" class="btn-primary" style="padding:6px 16px;">Filtrer</button>
+    {% if request.args.get('recherche') %}
+        <a href="{{ url_for('classes.detail_classe', nom_classe=nom_classe) }}" class="link-muted">Réinitialiser</a>
+    {% endif %}
+</form>
+
+<section class="pdf-section">
+    <h2>Impression PDF par catégorie de paiement</h2>
+    {% for cat in categories_paiement %}
+        <a href="{{ url_for('classes.generer_pdf_categorie', nom_classe=nom_classe, categorie=cat) }}"
+           class="link-default" target="_blank">Imprimer PDF - {{ cat }}</a>
+    {% endfor %}
+    <br><br>
+    <button type="button" class="link-button" onclick="openPrintPdf('{{ url_for('classes.generer_pdf_categorie', nom_classe=nom_classe, categorie='Toutes') }}')">
+        Imprimer tout (toutes catégories)
+    </button>
+</section>
+
+<section class="table-section">
+    <h2>Étudiants et paiements</h2>
+    <div class="table-scroll">
+        <table class="table-default">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Étudiant</th>
+                    <th>Commentaire</th>
+                    <th>Paiements</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for etu in etudiants %}
+                <tr>
+                    <td>{{ loop.index0 + 1 + ((page - 1) * per_page) }}</td>
+                    <td>{{ etu.Etudiant }}</td>
+                    <td title="{{ etu.Commentaire }}">{{ etu.Commentaire or "" }}</td>
+                    <td>
+                        {% if paiements.get(etu.Etudiant) %}
+                        <ul>
+                            {% for p in paiements[etu.Etudiant] %}
+                            <li>{{ p.CategoriePaiement }} : {{ "%.2f"|format(p.Montant) }} USD ({{ p.DatePaiement }})</li>
+                            {% endfor %}
+                        </ul>
+                        {% else %}
+                        Aucun paiement
+                        {% endif %}
+                    </td>
+                    <td>
+                        <a href="{{ url_for('classes.modifier_etudiant', nom_classe=nom_classe, etudiant=etu.Etudiant) }}" class="link-default">Modifier</a><br>
+                        <a href="{{ url_for('classes.ajouter_paiement', nom_classe=nom_classe, etudiant=etu.Etudiant) }}" class="link-default">Ajouter paiement</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+
+<div class="pagination">
+    {% if page > 1 %}
+        <a href="{{ url_for('classes.detail_classe', nom_classe=nom_classe, page=page-1, recherche=request.args.get('recherche','')) }}" class="link-default">&laquo; Précédent</a>
+    {% else %}
+        <span class="disabled">&laquo; Précédent</span>
+    {% endif %}
+    <span>Page {{ page }} sur {{ total_pages }}</span>
+    {% if page < total_pages %}
+        <a href="{{ url_for('classes.detail_classe', nom_classe=nom_classe, page=page+1, recherche=request.args.get('recherche','')) }}" class="link-default">Suivant &raquo;</a>
+    {% else %}
+        <span class="disabled">Suivant &raquo;</span>
+    {% endif %}
+</div>
+
+<section class="cours-section">
+    <h2>Cours de la classe</h2>
+    <ul>
+        {% for c in cours_classe %}
+            <li>{{ c }}</li>
+        {% else %}
+            <li>Aucun cours défini</li>
+        {% endfor %}
+    </ul>
+    <a href="{{ url_for('classes.ajouter_cours', nom_classe=nom_classe) }}" class="link-default">Ajouter des cours</a>
+</section>
+
+<script>
+function openPrintPdf(url) {
+    const printWindow = window.open(url, '_blank');
+    const timer = setInterval(function() {
+        if (printWindow.document.readyState === 'complete') {
+            printWindow.focus();
+            printWindow.print();
+            clearInterval(timer);
+        }
+    }, 500);
+}
+</script>
+{% endblock %}

@@ -1,0 +1,18 @@
+services:
+  - type: web
+    name: ulpgl-caisse
+    env: python
+    plan: free
+    buildCommand: "pip install -r requirements.txt"
+    startCommand: "gunicorn -w 1 -b 0.0.0.0:$PORT wsgi:app"
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.9
+      - key: SECRET_KEY
+        generateValue: true
+      - key: DATA_FOLDER
+        value: /var/data
+    disk:
+      name: data-disk
+      mountPath: /var/data
+      sizeGB: 1

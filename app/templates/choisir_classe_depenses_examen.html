@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+
+{% block title %}Choisir une classe pour dépenses d'examen{% endblock %}
+
+{% block content %}
+<h1>Choisir une classe</h1>
+
+<form id="formClasse" class="form-default" style="max-width: 400px; margin-top: 20px;">
+
+  <div class="form-group">
+    <label for="classe" class="label-default">Sélectionnez une classe <span class="text-danger">*</span></label>
+    <select id="classe" name="classe" required class="input-default">
+      <option value="" disabled selected>-- Choisissez une classe --</option>
+      {% for c in classes %}
+        <option value="{{ c }}">{{ c }}</option>
+      {% endfor %}
+    </select>
+  </div>
+
+  <div class="form-actions">
+    <button type="submit" class="btn-success">Afficher</button>
+  </div>
+
+</form>
+
+<script>
+document.getElementById("formClasse").addEventListener("submit", function(e) {
+    e.preventDefault();
+    const selectElem = document.getElementById("classe");
+    const classe = selectElem.value;
+    if (classe) {
+        // Construire l'URL avec url_for côté serveur (nom_classe dynamique)
+        const baseUrl = "{{ url_for('depenses.liste_depenses_examen', nom_classe='__classe__') }}";
+        const newUrl = baseUrl.replace('__classe__', encodeURIComponent(classe));
+        window.location.href = newUrl;
+    }
+});
+</script>
+{% endblock %}
