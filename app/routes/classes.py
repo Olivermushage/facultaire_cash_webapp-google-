@@ -256,7 +256,7 @@ def ajouter_cours(nom_classe):
 @login_required
 def ajouter_paiement(nom_classe):
     if request.method == "POST":
-        etudiant = request.form.get("etudiant", "").strip()
+        etudiant = request.args.get("etudiant", "").strip()
         categorie = request.form.get("categorie", "").strip()
         montant = request.form.get("montant", "").strip()
         date_paiement = request.form.get("date_paiement", "").strip()

@@ -55,6 +55,51 @@ def init_all_files():
 # ============================
 # UTILITAIRES
 # ============================
+# storage_gsheet.py doit déjà être importé là où tu appelles cette fonction
+import datetime
+
+def enregistrer_paiement(nom_classe, etudiant, categorie, montant, date_paiement, utilisateur):
+    try:
+        montant = float(montant)
+    except ValueError:
+        raise ValueError("Le montant doit être un nombre valide")
+
+    if montant < 0:
+        raise ValueError("Le montant doit être positif")
+
+    ws = sh.worksheet("Paiements")
+
+    colonnes = ["ID", "NomClasse", "Etudiant", "CategoriePaiement", "Montant", "DatePaiement"]
+
+    header = ws.row_values(1)
+    if not header:
+        ws.append_row(colonnes, value_input_option="USER_ENTERED")
+        header = colonnes
+
+    all_values = ws.get_all_values()
+    existing_ids = []
+    for row in all_values[1:]:
+        try:
+            existing_ids.append(int(row[0]))
+        except (ValueError, IndexError):
+            continue
+    next_id = max(existing_ids) + 1 if existing_ids else 1
+
+    # Formatter le montant en chaîne avec deux décimales, pour éviter interprétation en date
+    montant_str = "{:.2f}".format(montant)
+
+    row = [
+        next_id,
+        nom_classe,
+        etudiant,
+        categorie,
+        montant_str,
+        date_paiement if date_paiement else datetime.date.today().isoformat()
+    ]
+
+    ws.append_row(row, value_input_option="USER_ENTERED")
+
+
 
 def read_sheet(sheet_name):
     try:
