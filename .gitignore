@@ -1,15 +1,77 @@
+# ==========================
 # Python
+# ==========================
 __pycache__/
-*.pyc
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+*.egg
+*.egg-info/
+.eggs/
+dist/
+build/
+*.log
+
+# ==========================
+# Virtual Environment
+# ==========================
+venv/
+.env/
+.env.bak
+*.env
 .venv/
-.env
+ENV/
+env/
+pip-log.txt
+pip-delete-this-directory.txt
 
-# OS
+# ==========================
+# Flask / Instance
+# ==========================
+instance/
+*.db
+*.sqlite3
+
+# ==========================
+# Google API Credentials
+# (à ne JAMAIS versionner)
+# ==========================
+facultairecashwebapp-5b853b8f0832.json
+token.json
+
+# ==========================
+# Reports / Generated Files
+# ==========================
+*.pdf
+*.docx
+*.odt
+*.rtf
+
+# ==========================
+# IDE / Editor
+# ==========================
+.vscode/
+.idea/
+*.swp
+*.swo
+*.bak
+
+# ==========================
+# System Files
+# ==========================
 .DS_Store
+Thumbs.db
+desktop.ini
 
-# Données locales
-data/
-
-# Secrets fréquents
-*.json
-secrets/
+# ==========================
+# Testing / Coverage
+# ==========================
+htmlcov/
+.tox/
+.coverage
+coverage.xml
+.pytest_cache/
+.cache/
+nosetests.xml
+junit.xml
