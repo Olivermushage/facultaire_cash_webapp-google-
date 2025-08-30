@@ -1,3 +1,3 @@
-Test rapid python app.py
+Test rapid python run.py
 
-et packaging 
+et packaging  pyinstaller --onefile --noconsole --add-data "app/templates;app/templates" --add-data "app/static;app/static" --add-data "data;data" run.py

@@ -5,6 +5,7 @@
 {% block content %}
 <h2>Ajouter une dépense pour un travail - Classe {{ nom_classe }}</h2>
 
+{# Messages flash #}
 {% with messages = get_flashed_messages(with_categories=true) %}
   {% if messages %}
     <div class="flash-container">
@@ -22,7 +23,7 @@
   {% endif %}
 {% endwith %}
 
-<!-- Recherche étudiant -->
+{# Recherche étudiant #}
 <form method="get" class="form-inline" style="margin-bottom: 18px;">
   <input type="text" name="recherche" value="{{ request.args.get('recherche', '') }}"
          placeholder="Rechercher un étudiant..." class="input-inline">
@@ -110,7 +111,6 @@ function updateLabelCommentaire() {
 
 selectCategorie.addEventListener('change', populateDepenses);
 selectDepense.addEventListener('change', updateLabelCommentaire);
-
 document.addEventListener('DOMContentLoaded', populateDepenses);
 </script>
 {% endblock %}

@@ -1,5 +1,4 @@
 {% extends "base.html" %}
-
 {% block title %}Suivi des paiements pour {{ classe }}{% endblock %}
 
 {% block content %}
@@ -7,52 +6,53 @@
 
 {% with messages = get_flashed_messages(with_categories=true) %}
   {% if messages %}
-    <div style="max-width: 700px; margin-bottom: 20px;">
+    <div class="flash-container" style="max-width:700px; margin-bottom:20px;">
       {% for category, message in messages %}
-        <div class="flash-message flash-{{ category }}" role="alert" 
-             style="padding: 10px; border-radius: 4px; margin-bottom: 10px;
-               {% if category == 'success' %}background-color:#d4edda; color:#155724;
-               {% elif category == 'error' %}background-color:#f8d7da; color:#721c24;
-               {% elif category == 'warning' %}background-color:#fff3cd; color:#856404;
-               {% else %}background-color:#cce5ff; color:#004085;{% endif %}">
+        <div class="flash-message flash-{{ category }}" role="alert"
+             style="padding:10px; border-radius:4px; margin-bottom:8px;
+                    {% if category == 'success' %}background-color:#d4edda; color:#155724;
+                    {% elif category == 'error' %}background-color:#f8d7da; color:#721c24;
+                    {% elif category == 'warning' %}background-color:#fff3cd; color:#856404;
+                    {% else %}background-color:#cce5ff; color:#004085;{% endif %}">
           {{ message }}
           <button type="button" aria-label="Fermer le message" onclick="this.parentElement.style.display='none';"
-                  style="float:right; background:none; border:none; font-weight:bold; cursor:pointer; color: inherit;">&times;</button>
+                  style="float:right; background:none; border:none; font-weight:bold; cursor:pointer; color:inherit;">&times;</button>
         </div>
       {% endfor %}
     </div>
   {% endif %}
 {% endwith %}
 
-<table border="1" style="border-collapse: collapse; width: 100%; max-width: 900px;">
-  <thead>
-    <tr style="background-color: #f0f0f0;">
-      <th style="padding: 8px; text-align: left;">Étudiant</th>
-      {% for cat in suivi[0] %}
-        <th style="padding: 8px; text-align: center;">{{ cat }}</th>
-      {% endfor %}
-    </tr>
-  </thead>
-  <tbody>
-    {% for row in suivi[1] %}
+<div class="table-scroll" style="max-width:900px; overflow-x:auto;">
+  <table class="table-default">
+    <thead>
       <tr>
-        <td style="padding: 8px;">{{ row.student }}</td>
+        <th>Étudiant</th>
         {% for cat in suivi[0] %}
-          <td style="padding: 8px; text-align: center; vertical-align: middle;">
-            {% if row.paiements.get(cat) == "Payé" %}
-              ✅
-            {% else %}
-              <form method="post" style="margin: 0;">
-                <input type="hidden" name="student" value="{{ row.student }}">
-                <input type="hidden" name="category" value="{{ cat }}">
-                <button type="submit" style="padding: 4px 8px; cursor: pointer;">Cocher</button>
-              </form>
-            {% endif %}
-          </td>
+          <th style="text-align:center;">{{ cat }}</th>
         {% endfor %}
       </tr>
-    {% endfor %}
-  </tbody>
-</table>
-
+    </thead>
+    <tbody>
+      {% for row in suivi[1] %}
+        <tr>
+          <td>{{ row.student }}</td>
+          {% for cat in suivi[0] %}
+            <td style="text-align:center; vertical-align:middle;">
+              {% if row.paiements.get(cat) == "Payé" %}
+                ✅
+              {% else %}
+                <form method="post" style="margin:0;">
+                  <input type="hidden" name="student" value="{{ row.student }}">
+                  <input type="hidden" name="category" value="{{ cat }}">
+                  <button type="submit" class="btn-primary" style="padding:4px 8px;">Cocher</button>
+                </form>
+              {% endif %}
+            </td>
+          {% endfor %}
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
 {% endblock %}

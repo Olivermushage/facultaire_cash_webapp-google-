@@ -5,6 +5,7 @@
 {% block content %}
 <h2>Ajouter une autre dépense</h2>
 
+{# Messages flash #}
 {% with messages = get_flashed_messages(with_categories=true) %}
   {% if messages %}
     <div class="flash-container">
@@ -47,7 +48,7 @@
     <small class="text-muted">Montant total dépensé.</small>
 
     <div class="form-actions">
-        <a href="{{ url_for('depenses.depenses_index') }}" class="btn-link">Retour aux dépenses</a>
+        <a href="{{ url_for('depenses.depenses_index') }}" class="btn-link">← Retour aux dépenses</a>
         <button type="submit" class="btn-success">Enregistrer</button>
     </div>
 

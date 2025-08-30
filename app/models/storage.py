@@ -1,75 +1,75 @@
-import os
 import pandas as pd
-from datetime import datetime
-from ..config import Config
 import logging
+from datetime import datetime
 from flask import session
 import numpy as np
+import gspread
+from google.oauth2.service_account import Credentials
 
-# === Dossier principal des données ===
-DATA_FOLDER = Config.DATA_FOLDER
-os.makedirs(DATA_FOLDER, exist_ok=True)
+# ==============================
+# Configuration Google Sheets
+# ==============================
+SCOPES = ["https://www.googleapis.com/auth/spreadsheets"]
+creds = Credentials.from_service_account_file("facultairecashwebapp-5b853b8f0832.json", scopes=SCOPES)
+client = gspread.authorize(creds)
 
-# === Fichiers Excel ===
-FICHIER_CAISSE = os.path.join(DATA_FOLDER, "caisse.xlsx")
-CLASSES_FILE = os.path.join(DATA_FOLDER, "classes.xlsx")
-PAIEMENTS_FILE = os.path.join(DATA_FOLDER, "paiements.xlsx")
-DEPENSES_FILE = os.path.join(DATA_FOLDER, "depenses.xlsx")
-COURS_FILE = os.path.join(DATA_FOLDER, "cours_par_classe.xlsx")
-COMMENTS_FILE = os.path.join(DATA_FOLDER, "comments.xlsx")
-TRAVAUX_DEPENSES_FILE = os.path.join(DATA_FOLDER, "depenses_travaux.xlsx")
-CATEGORIES_PAIEMENT_FILE = os.path.join(DATA_FOLDER, "categories_paiement.xlsx")
-CATEGORIES_DEPENSE_FILE = os.path.join(DATA_FOLDER, "categories_depense.xlsx")
-AUTRES_RECETTES_FILE = os.path.join(DATA_FOLDER, "autres_recettes.xlsx")
-RECETTES_FILE = os.path.join(DATA_FOLDER, "recettes.xlsx")
+# L’ID du Google Sheet (mettre dans Config si tu veux centraliser)
+GOOGLE_SHEET_ID = "T1zmemDQexKAiaVCJkv_TttssWAr7nQOtHX57clnbXP_Q"
 
+# Mapping des fichiers Excel -> noms des onglets Google Sheets
+SHEETS_MAP = {
+    "caisse": "Caisse",
+    "classes": "Classes",
+    "paiements": "Paiements",
+    "depenses": "Depenses",
+    "cours": "Cours",
+    "comments": "Commentaires",
+    "depenses_travaux": "DepensesTravaux",
+    "categories_paiement": "CategoriesPaiement",
+    "categories_depense": "CategoriesDepense",
+    "autres_recettes": "AutresRecettes",
+    "recettes": "Recettes"
+}
 
-# === Helpers ===
-def _ensure_file(path, columns):
-    if not os.path.exists(path):
-        df = pd.DataFrame(columns=columns)
-        df.to_excel(path, index=False)
+# ==============================
+# Fonctions utilitaires
+# ==============================
+def lire_sheet(sheet_name):
+    """Lit une feuille Google Sheets et retourne un DataFrame."""
+    try:
+        worksheet = client.open_by_key(GOOGLE_SHEET_ID).worksheet(sheet_name)
+        data = worksheet.get_all_records()
+        return pd.DataFrame(data)
+    except Exception as e:
+        logging.error(f"Erreur lecture sheet {sheet_name}: {e}")
+        return pd.DataFrame()
 
+def sauvegarder_sheet(df, sheet_name):
+    """Écrase une feuille Google Sheets avec le contenu du DataFrame."""
+    try:
+        worksheet = client.open_by_key(GOOGLE_SHEET_ID).worksheet(sheet_name)
+        worksheet.clear()
+        if not df.empty:
+            worksheet.update([df.columns.values.tolist()] + df.values.tolist())
+    except Exception as e:
+        logging.error(f"Erreur sauvegarde sheet {sheet_name}: {e}")
 
-def ajouter_ligne(path, data, colonnes):
-    df = lire_excel(path)
+def ajouter_ligne(sheet_name, data, colonnes):
+    """Ajoute une ligne à une feuille Google Sheets."""
+    df = lire_sheet(sheet_name)
     for col in colonnes:
         if col not in data:
             data[col] = None
     df = pd.concat([df, pd.DataFrame([{col: data.get(col) for col in colonnes}])], ignore_index=True)
-    df.to_excel(path, index=False)
+    sauvegarder_sheet(df, sheet_name)
 
-
-def lire_excel(path):
-    if not os.path.exists(path):
-        return pd.DataFrame()
-    try:
-        return pd.read_excel(path)
-    except Exception as e:
-        logging.error(f"Erreur lecture fichier {path}: {e}")
-        return pd.DataFrame()
-
-
-# === Initialisation ===
-def init_all_files():
-    _ensure_file(FICHIER_CAISSE, ["Date", "Nom", "Type", "Montant", "Description"])
-    _ensure_file(CLASSES_FILE, ["NomClasse", "Etudiant"])
-    _ensure_file(PAIEMENTS_FILE, ["NomClasse", "Etudiant", "CategoriePaiement", "Montant", "DatePaiement"])
-    _ensure_file(DEPENSES_FILE, ["NomClasse", "NomCours", "DateExamen", "CategorieDepense", "Description", "Montant", "TypeDepense", "Commentaire", "DateDepense"])
-    _ensure_file(COURS_FILE, ["NomClasse", "NomCours"])
-    _ensure_file(COMMENTS_FILE, ["NomClasse", "Etudiant", "Commentaire", "Auteur", "Date"])
-    _ensure_file(TRAVAUX_DEPENSES_FILE, ["NomClasse", "Etudiant", "CategorieTravail", "TypeDepense", "Commentaire", "Montant", "DateDepense"])
-    _ensure_file(CATEGORIES_PAIEMENT_FILE, ["Categorie"])
-    _ensure_file(CATEGORIES_DEPENSE_FILE, ["Categorie"])
-    _ensure_file(AUTRES_RECETTES_FILE, ["Date", "NomClasse", "Etudiant", "CategoriePaiement", "Montant", "Description", "utilisateur"])
-    _ensure_file(RECETTES_FILE, ["Date", "Source", "Type", "Description", "Montant"])
-
-
-# === Caisse ===
+# ==============================
+# Caisse
+# ==============================
 COLONNES_CAISSE = ["Date", "Nom", "Type", "Montant", "Description", "utilisateur", "date_heure"]
 
 def lire_caisse():
-    df = lire_excel(FICHIER_CAISSE)
+    df = lire_sheet(SHEETS_MAP["caisse"])
     for col in COLONNES_CAISSE:
         if col not in df.columns:
             df[col] = np.nan
@@ -80,28 +80,30 @@ def enregistrer_operation(data):
         raise ValueError("Le montant doit être positif")
     data["utilisateur"] = session.get("user", "inconnu")
     data["date_heure"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    ajouter_ligne(FICHIER_CAISSE, data, COLONNES_CAISSE)
+    ajouter_ligne(SHEETS_MAP["caisse"], data, COLONNES_CAISSE)
 
-
-# === Classes & Étudiants ===
+# ==============================
+# Classes & Étudiants
+# ==============================
 def lire_classes():
-    return lire_excel(CLASSES_FILE)
+    return lire_sheet(SHEETS_MAP["classes"])
 
 def enregistrer_classe_etudiants(nom_classe, liste_etudiants):
     df = lire_classes()
     nouvelles = pd.DataFrame({"NomClasse": [nom_classe]*len(liste_etudiants), "Etudiant": liste_etudiants})
     df = pd.concat([df, nouvelles], ignore_index=True)
-    df.to_excel(CLASSES_FILE, index=False)
+    sauvegarder_sheet(df, SHEETS_MAP["classes"])
 
-
-# === Paiements ===
+# ==============================
+# Paiements
+# ==============================
 def lire_paiements():
-    return lire_excel(PAIEMENTS_FILE)
+    return lire_sheet(SHEETS_MAP["paiements"])
 
 def enregistrer_paiement(nom_classe, etudiant, categorie, montant, date_paiement):
     if montant < 0:
         raise ValueError("Le montant doit être positif")
-    ajouter_ligne(PAIEMENTS_FILE, {
+    ajouter_ligne(SHEETS_MAP["paiements"], {
         "NomClasse": nom_classe,
         "Etudiant": etudiant,
         "CategoriePaiement": categorie,
@@ -109,10 +111,11 @@ def enregistrer_paiement(nom_classe, etudiant, categorie, montant, date_paiement
         "DatePaiement": date_paiement
     }, ["NomClasse", "Etudiant", "CategoriePaiement", "Montant", "DatePaiement"])
 
-
-# === Dépenses ===
+# ==============================
+# Dépenses
+# ==============================
 def lire_depenses():
-    df = lire_excel(DEPENSES_FILE)
+    df = lire_sheet(SHEETS_MAP["depenses"])
     colonnes = ["NomClasse", "NomCours", "DateExamen", "CategorieDepense", "Description", "Montant", "TypeDepense", "Commentaire", "DateDepense"]
     for col in colonnes:
         if col not in df.columns:
@@ -123,22 +126,25 @@ def lire_depenses():
 def enregistrer_depense(data):
     if float(data.get("Montant", 0)) < 0:
         raise ValueError("Le montant doit être positif")
-    ajouter_ligne(DEPENSES_FILE, data, ["NomClasse", "NomCours", "DateExamen", "CategorieDepense", "Description", "Montant", "TypeDepense", "Commentaire", "DateDepense"])
+    ajouter_ligne(SHEETS_MAP["depenses"], data,
+                  ["NomClasse", "NomCours", "DateExamen", "CategorieDepense", "Description", "Montant", "TypeDepense", "Commentaire", "DateDepense"])
 
-
-# === Cours ===
+# ==============================
+# Cours
+# ==============================
 def lire_cours():
-    return lire_excel(COURS_FILE)
+    return lire_sheet(SHEETS_MAP["cours"])
 
 def enregistrer_cours(nom_classe, nom_cours):
     df = lire_cours()
     if not ((df["NomClasse"] == nom_classe) & (df["NomCours"] == nom_cours)).any():
-        ajouter_ligne(COURS_FILE, {"NomClasse": nom_classe, "NomCours": nom_cours}, ["NomClasse", "NomCours"])
+        ajouter_ligne(SHEETS_MAP["cours"], {"NomClasse": nom_classe, "NomCours": nom_cours}, ["NomClasse", "NomCours"])
 
-
-# === Commentaires ===
+# ==============================
+# Commentaires
+# ==============================
 def lire_comments():
-    return lire_excel(COMMENTS_FILE)
+    return lire_sheet(SHEETS_MAP["comments"])
 
 def enregistrer_commentaire(nom_classe, etudiant, commentaire, auteur=None):
     df = lire_comments()
@@ -149,8 +155,9 @@ def enregistrer_commentaire(nom_classe, etudiant, commentaire, auteur=None):
         df.at[idx, "Commentaire"] = commentaire
         df.at[idx, "Date"] = now_str
         df.at[idx, "Auteur"] = auteur or ""
+        sauvegarder_sheet(df, SHEETS_MAP["comments"])
     else:
-        ajouter_ligne(COMMENTS_FILE, {
+        ajouter_ligne(SHEETS_MAP["comments"], {
             "NomClasse": nom_classe,
             "Etudiant": etudiant,
             "Commentaire": commentaire,
@@ -158,112 +165,43 @@ def enregistrer_commentaire(nom_classe, etudiant, commentaire, auteur=None):
             "Date": now_str
         }, ["NomClasse", "Etudiant", "Commentaire", "Auteur", "Date"])
 
-
-# === Recettes ===
-def lire_autres_recettes():
-    df = lire_excel(AUTRES_RECETTES_FILE)
-    colonnes = ["Date", "NomClasse", "Etudiant", "CategoriePaiement", "Montant", "Description", "utilisateur"]
-    for col in colonnes:
-        if col not in df.columns:
-            df[col] = None
-    df["Montant"] = pd.to_numeric(df.get("Montant", pd.Series()), errors="coerce").fillna(0)
-    return df
-
-def enregistrer_autre_recette(nom_classe, etudiant, categorie_paiement, montant, description, date, utilisateur):
-    if montant < 0:
-        raise ValueError("Le montant doit être positif")
-    ajouter_ligne(AUTRES_RECETTES_FILE, {
-        "Date": date,
-        "NomClasse": nom_classe,
-        "Etudiant": etudiant,
-        "CategoriePaiement": categorie_paiement,
-        "Montant": montant,
-        "Description": description,
-        "utilisateur": utilisateur
-    }, ["Date", "NomClasse", "Etudiant", "CategoriePaiement", "Montant", "Description", "utilisateur"])
-
-def lire_recettes():
-    """
-    Lit toutes les recettes à afficher dans la liste,
-    en combinant RECETTES_FILE et AUTRES_RECETTES_FILE.
-    Renvoie un DataFrame avec colonnes : Date, Type, Description, Montant, Source, Utilisateur
-    """
-    # Recettes existantes
-    df1 = lire_excel(RECETTES_FILE)
-    for col in ["Date", "Source", "Type", "Description", "Montant"]:
-        if col not in df1.columns:
-            df1[col] = None
-    df1["Utilisateur"] = df1.get("Utilisateur", "")
-
-    # Autres recettes
-    df2 = lire_autres_recettes()
-    if not df2.empty:
-        df2_display = pd.DataFrame()
-        df2_display["Date"] = df2["Date"]
-        df2_display["Type"] = df2["CategoriePaiement"].fillna("manuelle")
-        df2_display["Description"] = df2["Description"]
-        df2_display["Montant"] = df2["Montant"]
-        df2_display["Source"] = df2["NomClasse"] + (" - " + df2["Etudiant"].fillna("") if "Etudiant" in df2.columns else "")
-        df2_display["Utilisateur"] = df2["utilisateur"].fillna("")
-    else:
-        df2_display = pd.DataFrame(columns=["Date", "Type", "Description", "Montant", "Source", "Utilisateur"])
-
-    df_final = pd.concat([df1[["Date", "Type", "Description", "Montant", "Source", "Utilisateur"]], 
-                          df2_display], ignore_index=True)
-    return df_final
-
-
-# === Dépenses Travaux ===
-def lire_depenses_travaux():
-    df = lire_excel(TRAVAUX_DEPENSES_FILE)
-    colonnes = ["NomClasse", "Etudiant", "CategorieTravail", "TypeDepense", "Commentaire", "Montant", "DateDepense"]
-    for col in colonnes:
-        if col not in df.columns:
-            df[col] = None
-    df["Montant"] = pd.to_numeric(df.get("Montant", pd.Series()), errors="coerce").fillna(0)
-    return df
-
-def enregistrer_depense_travail(data):
-    if float(data.get("Montant", 0)) < 0:
-        raise ValueError("Le montant doit être positif")
-    ajouter_ligne(TRAVAUX_DEPENSES_FILE, data, ["NomClasse", "Etudiant", "CategorieTravail", "TypeDepense", "Commentaire", "Montant", "DateDepense"])
-
-
-# === Catégories Paiement & Dépense ===
+# ==============================
+# Catégories
+# ==============================
 def lire_categories_paiement():
-    return lire_excel(CATEGORIES_PAIEMENT_FILE)
+    return lire_sheet(SHEETS_MAP["categories_paiement"])
 
 def lire_categories_depense():
-    return lire_excel(CATEGORIES_DEPENSE_FILE)
+    return lire_sheet(SHEETS_MAP["categories_depense"])
 
 def ajouter_categorie_paiement(nouvelle):
     df = lire_categories_paiement()
     if nouvelle in df["Categorie"].values:
         raise ValueError("La catégorie existe déjà")
-    ajouter_ligne(CATEGORIES_PAIEMENT_FILE, {"Categorie": nouvelle}, ["Categorie"])
+    ajouter_ligne(SHEETS_MAP["categories_paiement"], {"Categorie": nouvelle}, ["Categorie"])
 
 def supprimer_categorie_paiement(categorie):
     df = lire_categories_paiement()
     df = df[df["Categorie"] != categorie]
-    df.to_excel(CATEGORIES_PAIEMENT_FILE, index=False)
+    sauvegarder_sheet(df, SHEETS_MAP["categories_paiement"])
 
 def modifier_categorie_paiement(ancienne, nouvelle):
     df = lire_categories_paiement()
     df.loc[df["Categorie"] == ancienne, "Categorie"] = nouvelle
-    df.to_excel(CATEGORIES_PAIEMENT_FILE, index=False)
+    sauvegarder_sheet(df, SHEETS_MAP["categories_paiement"])
 
 def ajouter_categorie_depense(nouvelle):
     df = lire_categories_depense()
     if nouvelle in df["Categorie"].values:
         raise ValueError("La catégorie existe déjà")
-    ajouter_ligne(CATEGORIES_DEPENSE_FILE, {"Categorie": nouvelle}, ["Categorie"])
+    ajouter_ligne(SHEETS_MAP["categories_depense"], {"Categorie": nouvelle}, ["Categorie"])
 
 def supprimer_categorie_depense(categorie):
     df = lire_categories_depense()
     df = df[df["Categorie"] != categorie]
-    df.to_excel(CATEGORIES_DEPENSE_FILE, index=False)
+    sauvegarder_sheet(df, SHEETS_MAP["categories_depense"])
 
 def modifier_categorie_depense(ancienne, nouvelle):
     df = lire_categories_depense()
     df.loc[df["Categorie"] == ancienne, "Categorie"] = nouvelle
-    df.to_excel(CATEGORIES_DEPENSE_FILE, index=False)
+    sauvegarder_sheet(df, SHEETS_MAP["categories_depense"])

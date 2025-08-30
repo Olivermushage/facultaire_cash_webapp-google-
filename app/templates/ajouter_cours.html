@@ -5,9 +5,20 @@
 {% block content %}
 <h2>Ajouter des cours à la classe {{ nom_classe }}</h2>
 
+{# Messages flash (erreur / succès) #}
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    <ul class="flash-messages">
+      {% for category, message in messages %}
+        <li class="flash-{{ category }}">{{ message }}</li>
+      {% endfor %}
+    </ul>
+  {% endif %}
+{% endwith %}
+
 <form method="post" class="form-default">
     <label for="cours" class="label-default">Cours (un par ligne) :</label>
-    <textarea id="cours" name="cours" rows="10" required class="textarea-default"></textarea>
+    <textarea id="cours" name="cours" rows="10" required class="textarea-default">{{ cours_valeur|default('') }}</textarea>
 
     <button type="submit" class="btn-success">Ajouter</button>
 </form>

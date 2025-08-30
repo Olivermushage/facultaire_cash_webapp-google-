@@ -1,109 +1,139 @@
 {% extends "base.html" %}
 
-{% block title %}Détail classe {{ nom_classe }}{% endblock %}
+{% block title %}Classe - {{ nom_classe }}{% endblock %}
 
 {% block content %}
-<h1>Classe : {{ nom_classe }}</h1>
+<h2>Classe : {{ nom_classe }}</h2>
 
+{# Messages flash #}
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    <div class="flash-container">
+      {% for category, message in messages %}
+        <div class="flash-message flash-{{ category }}">
+          {{ message }}
+          <button class="flash-close-btn" onclick="this.parentElement.style.display='none';">×</button>
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+{% endwith %}
+
+<!-- Actions principales -->
 <div class="actions-section">
-    <p>
-        <a href="{{ url_for('classes.ajouter_depense_travail', nom_classe=nom_classe) }}" class="btn-primary">
-            + Ajouter une dépense liée aux travaux des étudiants
-        </a>
-    </p>
-    <p>
-        <a href="{{ url_for('depenses.liste_depenses_examen', nom_classe=nom_classe) }}" class="link-default">
-            Voir les dépenses liées aux examens
-        </a>
-    </p>
+    <a href="{{ url_for('classes.ajouter_depense_travail', nom_classe=nom_classe) }}" class="btn-success">
+        ➕ Dépense travaux étudiants
+    </a>
+    <a href="{{ url_for('depenses.choisir_classe_examen', nom_classe=nom_classe) }}" class="btn-secondary">
+        📄 Dépenses examens
+    </a>
 </div>
 
-<form method="get" class="form-inline" style="margin-bottom: 20px; max-width: 600px;">
+<!-- Barre de recherche -->
+<form method="get" class="form-inline search-form">
     <input type="text" name="recherche" value="{{ request.args.get('recherche', '') }}"
-           placeholder="Rechercher un étudiant..." class="input-default" style="flex-grow:1;">
-    <button type="submit" class="btn-primary" style="padding:6px 16px;">Filtrer</button>
+           placeholder="🔍 Rechercher un étudiant..." class="input-default">
+    <button type="submit" class="btn-primary">Filtrer</button>
     {% if request.args.get('recherche') %}
         <a href="{{ url_for('classes.detail_classe', nom_classe=nom_classe) }}" class="link-muted">Réinitialiser</a>
     {% endif %}
 </form>
 
+<!-- PDF -->
 <section class="pdf-section">
-    <h2>Impression PDF par catégorie de paiement</h2>
+    <h3>Impressions PDF</h3>
     {% for cat in categories_paiement %}
         <a href="{{ url_for('classes.generer_pdf_categorie', nom_classe=nom_classe, categorie=cat) }}"
-           class="link-default" target="_blank">Imprimer PDF - {{ cat }}</a>
+           class="btn-secondary" target="_blank">📄 {{ cat }}</a>
     {% endfor %}
-    <br><br>
-    <button type="button" class="link-button" onclick="openPrintPdf('{{ url_for('classes.generer_pdf_categorie', nom_classe=nom_classe, categorie='Toutes') }}')">
-        Imprimer tout (toutes catégories)
-    </button>
+    <a href="{{ url_for('classes.generer_pdf_categorie', nom_classe=nom_classe, categorie='Toutes') }}"
+       class="btn-secondary" target="_blank" download>
+        🖨️ Tout télécharger
+    </a>
 </section>
 
+
+</section>
+
+<!-- Tableau étudiants -->
 <section class="table-section">
-    <h2>Étudiants et paiements</h2>
-    <div class="table-scroll">
-        <table class="table-default">
-            <thead>
-                <tr>
-                    <th>#</th>
-                    <th>Étudiant</th>
-                    <th>Commentaire</th>
-                    <th>Paiements</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for etu in etudiants %}
+    <h3>Étudiants et paiements</h3>
+    <a href="{{ url_for('classes.ajouter_etudiant', nom_classe=nom_classe) }}" class="btn-success">➕ Ajouter étudiants</a>
+
+    <table class="table-default">
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>Nom</th>
+                <th>Commentaire</th>
+                <th>Paiements</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% if etudiants %}
+              {% for etu in etudiants %}
                 <tr>
                     <td>{{ loop.index0 + 1 + ((page - 1) * per_page) }}</td>
                     <td>{{ etu.Etudiant }}</td>
-                    <td title="{{ etu.Commentaire }}">{{ etu.Commentaire or "" }}</td>
+                    <td>{{ etu.Commentaire|default('-') }}</td>
                     <td>
                         {% if paiements.get(etu.Etudiant) %}
-                        <ul>
-                            {% for p in paiements[etu.Etudiant] %}
-                            <li>{{ p.CategoriePaiement }} : {{ "%.2f"|format(p.Montant) }} USD ({{ p.DatePaiement }})</li>
-                            {% endfor %}
-                        </ul>
+                            <ul>
+                                {% for p in paiements[etu.Etudiant] %}
+                                    <li>
+                                        {{ p.CategoriePaiement }} : {{ "%.2f"|format(p.Montant) }} USD ({{ p.DatePaiement }})
+                                        {% if p.ID is defined %}
+                                        <a href="{{ url_for('classes.modifier_paiement', nom_classe=nom_classe, paiement_id=p.ID) }}">✏️</a>
+                                        {% endif %}
+                                    </li>
+                                {% endfor %}
+                            </ul>
                         {% else %}
-                        Aucun paiement
+                            Aucun
                         {% endif %}
                     </td>
                     <td>
-                        <a href="{{ url_for('classes.modifier_etudiant', nom_classe=nom_classe, etudiant=etu.Etudiant) }}" class="link-default">Modifier</a><br>
-                        <a href="{{ url_for('classes.ajouter_paiement', nom_classe=nom_classe, etudiant=etu.Etudiant) }}" class="link-default">Ajouter paiement</a>
+                        <a href="{{ url_for('classes.modifier_etudiant', nom_classe=nom_classe, etudiant=etu.Etudiant) }}">Modifier</a> |
+                        <a href="{{ url_for('classes.ajouter_paiement', nom_classe=nom_classe, etudiant=etu.Etudiant) }}">+ Paiement</a>
                     </td>
                 </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
+              {% endfor %}
+            {% else %}
+                <tr>
+                    <td colspan="5">Aucun étudiant enregistré</td>
+                </tr>
+            {% endif %}
+        </tbody>
+    </table>
 </section>
 
+<!-- Pagination -->
 <div class="pagination">
     {% if page > 1 %}
-        <a href="{{ url_for('classes.detail_classe', nom_classe=nom_classe, page=page-1, recherche=request.args.get('recherche','')) }}" class="link-default">&laquo; Précédent</a>
-    {% else %}
-        <span class="disabled">&laquo; Précédent</span>
+        <a href="{{ url_for('classes.detail_classe', nom_classe=nom_classe, page=page-1, recherche=request.args.get('recherche','')) }}">&laquo; Précédent</a>
     {% endif %}
-    <span>Page {{ page }} sur {{ total_pages }}</span>
+    <span>Page {{ page }} / {{ total_pages }}</span>
     {% if page < total_pages %}
-        <a href="{{ url_for('classes.detail_classe', nom_classe=nom_classe, page=page+1, recherche=request.args.get('recherche','')) }}" class="link-default">Suivant &raquo;</a>
-    {% else %}
-        <span class="disabled">Suivant &raquo;</span>
+        <a href="{{ url_for('classes.detail_classe', nom_classe=nom_classe, page=page+1, recherche=request.args.get('recherche','')) }}">Suivant &raquo;</a>
     {% endif %}
 </div>
 
+<!-- Cours -->
 <section class="cours-section">
-    <h2>Cours de la classe</h2>
+    <h3>Cours</h3>
     <ul>
-        {% for c in cours_classe %}
-            <li>{{ c }}</li>
+        {% if cours_classe %}
+            {% for c in cours_classe %}
+                <li>{{ c }}</li>
+            {% endfor %}
         {% else %}
             <li>Aucun cours défini</li>
-        {% endfor %}
+        {% endif %}
     </ul>
-    <a href="{{ url_for('classes.ajouter_cours', nom_classe=nom_classe) }}" class="link-default">Ajouter des cours</a>
+    <a href="{{ url_for('classes.ajouter_cours', nom_classe=nom_classe) }}" class="btn-secondary">
+        ➕ Ajouter cours
+    </a>
 </section>
 
 <script>

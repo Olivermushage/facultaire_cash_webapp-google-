@@ -3,14 +3,20 @@
 {% block title %}Créer un utilisateur{% endblock %}
 
 {% block content %}
-<h1>Créer un utilisateur</h1>
+<h2>👤 Créer un utilisateur</h2>
 
+{# Messages flash #}
 {% with messages = get_flashed_messages(with_categories=true) %}
   {% if messages %}
-    <div class="flash-container">
+    <div class="flash-container" style="margin-bottom: 15px;">
       {% for category, message in messages %}
-        <div class="flash-message flash-{{ category }}">
+        <div class="flash-message
+            {% if category == 'success' %}flash-success{% endif %}
+            {% if category == 'error' %}flash-error{% endif %}
+            {% if category == 'warning' %}flash-warning{% endif %}
+            {% if category == 'info' %}flash-info{% endif %}">
           {{ message }}
+          <button class="flash-close-btn" onclick="this.parentElement.style.display='none';">×</button>
         </div>
       {% endfor %}
     </div>
@@ -18,26 +24,24 @@
 {% endwith %}
 
 <form method="post" novalidate class="form-default">
-  <div class="form-group">
-    <label for="username" class="label-default">Nom d'utilisateur <span class="text-danger">*</span></label>
-    <input type="text" id="username" name="username" required placeholder="Nom d'utilisateur" class="input-default">
+
+  <label for="username" class="label-default">Nom d'utilisateur <span class="text-danger">*</span></label>
+  <input type="text" id="username" name="username" required
+         placeholder="Nom d'utilisateur" value="{{ request.form.get('username','') }}" class="input-default">
+
+  <label for="password" class="label-default">Mot de passe <span class="text-danger">*</span></label>
+  <input type="password" id="password" name="password" required
+         placeholder="Mot de passe" class="input-default">
+
+  <label for="role" class="label-default">Rôle</label>
+  <select id="role" name="role" class="input-default">
+    <option value="user" {% if request.form.get('role','user') == 'user' %}selected{% endif %}>Utilisateur</option>
+    <option value="admin" {% if request.form.get('role') == 'admin' %}selected{% endif %}>Administrateur</option>
+  </select>
+
+  <div class="form-actions" style="margin-top: 15px;">
+    <button type="submit" class="btn-success">Créer l'utilisateur</button>
   </div>
 
-  <div class="form-group">
-    <label for="password" class="label-default">Mot de passe <span class="text-danger">*</span></label>
-    <input type="password" id="password" name="password" required placeholder="Mot de passe" class="input-default">
-  </div>
-
-  <div class="form-group">
-    <label for="role" class="label-default">Rôle</label>
-    <select id="role" name="role" class="input-default">
-      <option value="user" selected>Utilisateur</option>
-      <option value="admin">Administrateur</option>
-    </select>
-  </div>
-
-  <div class="form-actions">
-    <button type="submit" class="btn-primary">Créer l'utilisateur</button>
-  </div>
 </form>
 {% endblock %}

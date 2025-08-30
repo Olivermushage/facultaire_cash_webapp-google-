@@ -1,7 +1,7 @@
 import logging
 from flask import Blueprint, render_template, request, redirect, url_for, flash
 from app.routes.auth import login_required, admin_required  # Décorateurs custom
-from ..models.storage import (
+from ..models.storage_gsheets import (
     lire_categories_paiement,
     lire_categories_depense,
     ajouter_categorie_paiement,
@@ -9,7 +9,7 @@ from ..models.storage import (
     modifier_categorie_paiement,
     modifier_categorie_depense,
     supprimer_categorie_paiement,
-    supprimer_categorie_depense
+    supprimer_categorie_depense,
 )
 
 categories_bp = Blueprint("categories", __name__, template_folder="../templates")
@@ -19,9 +19,30 @@ categories_bp = Blueprint("categories", __name__, template_folder="../templates"
 @login_required
 @admin_required
 def gerer_categories():
-    """Gestion des catégories de paiement et de dépense."""
     df_p = lire_categories_paiement()
     df_d = lire_categories_depense()
+
+    def normalize_columns(df):
+        df.columns = df.columns.astype(str)
+        # Nettoyer et normaliser noms colonnes (éliminer accents, espaces)
+        df.columns = (
+            df.columns.str.strip()
+                      .str.normalize('NFKD')
+                      .str.encode('ascii', errors='ignore')
+                      .str.decode('utf-8')
+        )
+        # Renommer 'Categorie' sans accent si la colonne originale s'appelle 'Categorie' ou 'Catégorie'
+        if 'Categorie' not in df.columns:
+            if 'Categorie' not in df.columns and 'Categorie' not in df.columns:
+                # Recherche de la colonne avec accent qui deviendra Categorie
+                for col in df.columns:
+                    if col.lower() == 'categorie':
+                        df.rename(columns={col: 'Categorie'}, inplace=True)
+                        break
+        return df
+
+    df_p = normalize_columns(df_p)
+    df_d = normalize_columns(df_d)
 
     if request.method == "POST":
         action = request.form.get("action")
@@ -32,17 +53,23 @@ def gerer_categories():
             return redirect(url_for("categories.gerer_categories"))
 
         try:
+            df_courant = df_p if type_categorie == "paiement" else df_d
+            categories_existantes = df_courant["Categorie"].dropna().tolist() if "Categorie" in df_courant.columns else []
+
             if action == "ajouter":
                 nouvelle = request.form.get("nouvelle_categorie", "").strip()
                 if not nouvelle:
                     flash("Le nom de la catégorie est requis.", "error")
                 else:
-                    if type_categorie == "paiement":
-                        ajouter_categorie_paiement(nouvelle)
+                    if nouvelle in categories_existantes:
+                        flash(f"La catégorie '{nouvelle}' existe déjà.", "error")
                     else:
-                        ajouter_categorie_depense(nouvelle)
-                    flash(f"Catégorie '{nouvelle}' ajoutée.", "success")
-                    return redirect(url_for("categories.gerer_categories"))
+                        if type_categorie == "paiement":
+                            ajouter_categorie_paiement(nouvelle)
+                        else:
+                            ajouter_categorie_depense(nouvelle)
+                        flash(f"Catégorie '{nouvelle}' ajoutée.", "success")
+                        return redirect(url_for("categories.gerer_categories"))
 
             elif action == "modifier":
                 ancienne = request.form.get("ancienne_categorie", "").strip()
@@ -50,10 +77,6 @@ def gerer_categories():
                 if not ancienne or not nouvelle:
                     flash("Les noms des catégories doivent être fournis pour la modification.", "error")
                 else:
-                    categories_existantes = (
-                        df_p["Categorie"].dropna().tolist()
-                        if type_categorie == "paiement" else df_d["Categorie"].dropna().tolist()
-                    )
                     if ancienne not in categories_existantes:
                         flash(f"La catégorie '{ancienne}' n'existe pas.", "error")
                     else:
@@ -69,10 +92,6 @@ def gerer_categories():
                 if not categorie:
                     flash("Le nom de la catégorie est requis pour la suppression.", "error")
                 else:
-                    categories_existantes = (
-                        df_p["Categorie"].dropna().tolist()
-                        if type_categorie == "paiement" else df_d["Categorie"].dropna().tolist()
-                    )
                     if categorie not in categories_existantes:
                         flash(f"La catégorie '{categorie}' n'existe pas.", "error")
                     else:
@@ -86,21 +105,17 @@ def gerer_categories():
             else:
                 flash("Action inconnue.", "error")
 
-        except ValueError as ve:
-            logging.exception("Erreur de valeur lors de la gestion des catégories")
-            flash(str(ve), "error")
-            return redirect(url_for("categories.gerer_categories"))
-
         except Exception as e:
-            logging.exception("Exception lors de la gestion des catégories")
-            flash("Une erreur est survenue lors de la gestion des catégories.", "error")
+            logging.exception("Erreur lors de la gestion des catégories")
+            flash(f"Une erreur est survenue : {e}", "error")
             return redirect(url_for("categories.gerer_categories"))
 
-    categories_paiement = df_p["Categorie"].dropna().tolist()
-    categories_depense = df_d["Categorie"].dropna().tolist()
+    categories_paiement = df_p["Categorie"].dropna().tolist() if df_p is not None and "Categorie" in df_p.columns else []
+    categories_depense = df_d["Categorie"].dropna().tolist() if df_d is not None and "Categorie" in df_d.columns else []
 
     return render_template(
         "gerer_categories_paiement.html",
         categories_paiement=categories_paiement,
-        categories_depense=categories_depense
+        categories_depense=categories_depense,
     )
+

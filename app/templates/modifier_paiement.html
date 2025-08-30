@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block title %}✏️ Modifier un paiement{% endblock %}
+
+{% block content %}
+<h2>✏️ Modifier un paiement</h2>
+
+<!-- Messages flash -->
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    <div class="flash-container" style="max-width:500px; margin-bottom:20px;">
+      {% for category, message in messages %}
+        <div class="flash-message flash-{{ category }}" role="alert" style="padding:10px; border-radius:4px; margin-bottom:8px;">
+          {{ message }}
+          <button type="button" aria-label="Fermer le message" onclick="this.parentElement.style.display='none';"
+                  style="float:right; background:none; border:none; font-weight:bold; cursor:pointer; color:inherit;">&times;</button>
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+{% endwith %}
+
+<form method="POST" class="form-default" style="max-width:400px;">
+
+    <div class="form-group">
+        <label for="categorie">Catégorie :</label>
+        <input type="text" name="categorie" id="categorie" value="{{ paiement['CategoriePaiement'] }}" required class="input-default">
+    </div>
+
+    <div class="form-group">
+        <label for="montant">Montant (USD) :</label>
+        <input type="number" step="0.01" name="montant" id="montant" value="{{ paiement['Montant'] }}" required class="input-default">
+    </div>
+
+    <div class="form-group">
+        <label for="date">Date :</label>
+        <input type="date" name="date" id="date" value="{{ paiement['DatePaiement'] }}" required class="input-default">
+    </div>
+
+    <div class="form-actions" style="margin-top:10px; display:flex; gap:10px;">
+        <button type="submit" class="btn-primary">💾 Sauvegarder</button>
+        <a href="{{ url_for('classes.detail_classe', nom_classe=nom_classe) }}" class="btn-secondary">Annuler</a>
+    </div>
+
+</form>
+{% endblock %}

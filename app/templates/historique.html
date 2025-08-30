@@ -3,20 +3,21 @@
 {% block title %}Historique des opérations{% endblock %}
 
 {% block content %}
-<h1>Historique des opérations</h1>
+<h1>📜 Historique des opérations</h1>
 
 <!-- Formulaire de recherche -->
-<form method="get" class="form-inline">
+<form method="get" class="form-inline mb-20">
     <input type="text" name="recherche" value="{{ request.args.get('recherche', '') }}"
-           placeholder="Rechercher..." class="input-search">
+           placeholder="🔎 Rechercher..." class="input-search">
     <button type="submit" class="btn-primary">Filtrer</button>
     {% if request.args.get('recherche') %}
-        <a href="{{ url_for('historique') }}" class="link-reset">Réinitialiser</a>
+        <a href="{{ url_for('historique') }}" class="btn-link">❌ Réinitialiser</a>
     {% endif %}
 </form>
 
 <!-- Section opérations en caisse -->
-<h2>Opérations en caisse</h2>
+<section class="mb-40">
+<h2>💰 Opérations en caisse</h2>
 <div class="table-scroll">
     <table class="table-default">
         <thead>
@@ -36,7 +37,7 @@
                 <td>{{ op.utilisateur or 'Inconnu' }}</td>
                 <td>{{ op.Nom or '-' }}</td>
                 <td>{{ op.Type or '-' }}</td>
-                <td>{{ "%.2f"|format(op.Montant) if op.Montant else "0.00" }} USD</td>
+                <td>{{ "%.2f"|format(op.Montant) if op.Montant else "0.00" }}</td>
                 <td>{{ op.Description or '-' }}</td>
             </tr>
             {% else %}
@@ -45,9 +46,10 @@
         </tbody>
     </table>
 </div>
+</section>
 
 <!-- Pagination -->
-<div class="pagination">
+<div class="pagination mb-40">
     {% if page > 1 %}
         <a href="{{ url_for('historique', page=page-1, recherche=request.args.get('recherche','')) }}">&laquo; Précédent</a>
     {% else %}
@@ -61,8 +63,9 @@
     {% endif %}
 </div>
 
-<!-- Section dépenses classiques -->
-<h2>Dépenses classiques</h2>
+<!-- Dépenses classiques -->
+<section class="mb-40">
+<h2>📊 Dépenses classiques</h2>
 <div class="table-scroll">
     <table class="table-default">
         <thead>
@@ -81,7 +84,7 @@
                 <td>{{ dep.DateExamen or dep.DateDepense or '-' }}</td>
                 <td>{{ dep.CategorieDepense or '-' }}</td>
                 <td>{{ dep.Description or dep.Commentaire or '-' }}</td>
-                <td>{{ "%.2f"|format(dep.Montant) if dep.Montant else "0.00" }} USD</td>
+                <td>{{ "%.2f"|format(dep.Montant) if dep.Montant else "0.00" }}</td>
             </tr>
             {% else %}
             <tr><td colspan="5" class="text-center">Aucune dépense classique enregistrée.</td></tr>
@@ -89,9 +92,11 @@
         </tbody>
     </table>
 </div>
+</section>
 
-<!-- Section dépenses travaux -->
-<h2>Dépenses liées aux travaux</h2>
+<!-- Dépenses travaux -->
+<section class="mb-40">
+<h2>🛠️ Dépenses liées aux travaux</h2>
 <div class="table-scroll">
     <table class="table-default">
         <thead>
@@ -114,7 +119,7 @@
                 <td>{{ dep.TypeDepense or '-' }}</td>
                 <td>{{ dep.Commentaire or '-' }}</td>
                 <td>{{ dep.DateDepense or '-' }}</td>
-                <td>{{ "%.2f"|format(dep.Montant) if dep.Montant else "0.00" }} USD</td>
+                <td>{{ "%.2f"|format(dep.Montant) if dep.Montant else "0.00" }}</td>
             </tr>
             {% else %}
             <tr><td colspan="7" class="text-center">Aucune dépense liée aux travaux enregistrée.</td></tr>
@@ -122,9 +127,11 @@
         </tbody>
     </table>
 </div>
+</section>
 
-<!-- Section recettes -->
-<h2>Recettes</h2>
+<!-- Recettes -->
+<section class="mb-40">
+<h2>📈 Recettes</h2>
 <div class="table-scroll">
     <table class="table-default">
         <thead>
@@ -143,7 +150,7 @@
                 <td>{{ rec.Source or '-' }}</td>
                 <td>{{ rec.Type or '-' }}</td>
                 <td>{{ rec.Description or '-' }}</td>
-                <td>{{ "%.2f"|format(rec.Montant) if rec.Montant else "0.00" }} USD</td>
+                <td>{{ "%.2f"|format(rec.Montant) if rec.Montant else "0.00" }}</td>
             </tr>
             {% else %}
             <tr><td colspan="5" class="text-center">Aucune recette enregistrée.</td></tr>
@@ -151,6 +158,9 @@
         </tbody>
     </table>
 </div>
+</section>
 
-<a href="{{ url_for('main.index') }}" class="btn-link">Retour à l'accueil</a>
+<p class="mt-40">
+  <a href="{{ url_for('main.index') }}" class="btn-link">⬅ Retour à l'accueil</a>
+</p>
 {% endblock %}

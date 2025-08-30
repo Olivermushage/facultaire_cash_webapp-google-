@@ -1,109 +1,118 @@
 {% extends "base.html" %}
 
-{% block title %}Gestion des catégories de paiement et dépense{% endblock %}
+{% block title %}Gestion des catégories{% endblock %}
 
 {% block content %}
-<h1>Gestion des catégories</h1>
+<h1>📂 Gestion des catégories de paiement et dépense</h1>
 
+<!-- Messages flash -->
 {% with messages = get_flashed_messages(with_categories=true) %}
   {% if messages %}
-    {% for category, message in messages %}
-      <div class="flash-message flash-{{ category }}">{{ message }}</div>
-    {% endfor %}
+    <div class="flash-container">
+      {% for category, message in messages %}
+        <div class="flash-message flash-{{ category }}">{{ message }}</div>
+      {% endfor %}
+    </div>
   {% endif %}
 {% endwith %}
 
+<!-- Ajouter une catégorie -->
 <section class="form-section">
-  <h2>Ajouter une nouvelle catégorie</h2>
+  <h2>➕ Ajouter une nouvelle catégorie</h2>
   <form method="post" class="form-default">
     <input type="hidden" name="action" value="ajouter">
 
-    <label for="type_categorie_ajout">Type de catégorie <span class="required">*</span></label>
+    <label for="type_categorie_ajout">Type <span class="text-danger">*</span></label>
     <select id="type_categorie_ajout" name="type_categorie" required class="select-default">
       <option value="" disabled selected>-- Choisissez un type --</option>
-      <option value="paiement">Catégorie de paiement</option>
-      <option value="depense">Catégorie de dépense</option>
+      <option value="paiement" {% if request.form.get('type_categorie')=='paiement' %}selected{% endif %}>Catégorie de paiement</option>
+      <option value="depense" {% if request.form.get('type_categorie')=='depense' %}selected{% endif %}>Catégorie de dépense</option>
     </select>
 
-    <label for="nouvelle_categorie">Nom de la catégorie <span class="required">*</span></label>
-    <input type="text" id="nouvelle_categorie" name="nouvelle_categorie" required class="input-default">
+    <label for="nouvelle_categorie">Nom <span class="text-danger">*</span></label>
+    <input type="text" id="nouvelle_categorie" name="nouvelle_categorie"
+           value="{{ request.form.get('nouvelle_categorie','') }}" required class="input-default">
 
-    <button type="submit" class="btn-primary">Ajouter</button>
+    <button type="submit" class="btn-primary" aria-label="Ajouter catégorie">✅ Ajouter</button>
   </form>
 </section>
 
+<!-- Modifier une catégorie -->
 <section class="form-section">
-  <h2>Modifier une catégorie existante</h2>
+  <h2>✏️ Modifier une catégorie existante</h2>
   <form method="post" class="form-default">
     <input type="hidden" name="action" value="modifier">
 
-    <label for="type_categorie_modif">Type de catégorie <span class="required">*</span></label>
-    <select id="type_categorie_modif" name="type_categorie" required class="select-default" onchange="updateSelectAncienneCategorie()">
+    <label for="type_categorie_modif">Type <span class="text-danger">*</span></label>
+    <select id="type_categorie_modif" name="type_categorie" required class="select-default" onchange="updateSelectOptions('ancienne_categorie', this.value, '{{ request.form.get('ancienne_categorie','') }}')">
       <option value="" disabled selected>-- Choisissez un type --</option>
-      <option value="paiement">Catégorie de paiement</option>
-      <option value="depense">Catégorie de dépense</option>
+      <option value="paiement" {% if request.form.get('type_categorie')=='paiement' %}selected{% endif %}>Catégorie de paiement</option>
+      <option value="depense" {% if request.form.get('type_categorie')=='depense' %}selected{% endif %}>Catégorie de dépense</option>
     </select>
 
-    <label for="ancienne_categorie">Catégorie à modifier <span class="required">*</span></label>
+    <label for="ancienne_categorie">Catégorie à modifier <span class="text-danger">*</span></label>
     <select id="ancienne_categorie" name="ancienne_categorie" required class="select-default">
       <option value="" disabled selected>-- Sélectionnez une catégorie --</option>
     </select>
+    {% if not categories_paiement and not categories_depense %}
+      <div class="text-muted">Aucune catégorie disponible pour modification.</div>
+    {% endif %}
 
-    <label for="nouvelle_categorie_modif">Nouveau nom <span class="required">*</span></label>
-    <input type="text" id="nouvelle_categorie_modif" name="nouvelle_categorie_modif" required class="input-default">
+    <label for="nouvelle_categorie_modif">Nouveau nom <span class="text-danger">*</span></label>
+    <input type="text" id="nouvelle_categorie_modif" name="nouvelle_categorie_modif"
+           value="{{ request.form.get('nouvelle_categorie_modif','') }}" required class="input-default">
 
-    <button type="submit" class="btn-success">Modifier</button>
+    <button type="submit" class="btn-success" aria-label="Modifier catégorie">💾 Enregistrer</button>
   </form>
 </section>
 
+<!-- Supprimer une catégorie -->
 <section class="form-section">
-  <h2>Supprimer une catégorie</h2>
+  <h2>🗑️ Supprimer une catégorie</h2>
   <form method="post" class="form-default">
     <input type="hidden" name="action" value="supprimer">
 
-    <label for="type_categorie_suppr">Type de catégorie <span class="required">*</span></label>
-    <select id="type_categorie_suppr" name="type_categorie" required class="select-default" onchange="updateSelectCategorieSuppr()">
+    <label for="type_categorie_suppr">Type <span class="text-danger">*</span></label>
+    <select id="type_categorie_suppr" name="type_categorie" required class="select-default" onchange="updateSelectOptions('categorie_suppr', this.value, '{{ request.form.get('categorie_suppr','') }}')">
       <option value="" disabled selected>-- Choisissez un type --</option>
-      <option value="paiement">Catégorie de paiement</option>
-      <option value="depense">Catégorie de dépense</option>
+      <option value="paiement" {% if request.form.get('type_categorie')=='paiement' %}selected{% endif %}>Catégorie de paiement</option>
+      <option value="depense" {% if request.form.get('type_categorie')=='depense' %}selected{% endif %}>Catégorie de dépense</option>
     </select>
 
-    <label for="categorie_suppr">Catégorie à supprimer <span class="required">*</span></label>
+    <label for="categorie_suppr">Catégorie <span class="text-danger">*</span></label>
     <select id="categorie_suppr" name="categorie_suppr" required class="select-default">
       <option value="" disabled selected>-- Sélectionnez une catégorie --</option>
     </select>
+    {% if not categories_paiement and not categories_depense %}
+      <div class="text-muted">Aucune catégorie disponible pour suppression.</div>
+    {% endif %}
 
-    <button type="submit" class="btn-danger"
+    <button type="submit" class="btn-danger" aria-label="Supprimer catégorie"
             onclick="return confirm('Voulez-vous vraiment supprimer cette catégorie ? Cette action est irréversible.');">
-      Supprimer
+      ❌ Supprimer
     </button>
   </form>
 </section>
 
 <p class="mt-40">
-  <a href="{{ url_for('main.index') }}" class="link-default">&laquo; Retour à l'accueil</a>
+  <a href="{{ url_for('main.index') }}" class="link-default">⬅ Retour à l'accueil</a>
 </p>
 
 <script>
 const categoriesPaiement = {{ categories_paiement|tojson }};
 const categoriesDepense = {{ categories_depense|tojson }};
 
-function updateSelectAncienneCategorie() {
-  const type = document.getElementById("type_categorie_modif").value;
-  const select = document.getElementById("ancienne_categorie");
-  updateSelectOptions(select, type);
-}
-
-function updateSelectCategorieSuppr() {
-  const type = document.getElementById("type_categorie_suppr").value;
-  const select = document.getElementById("categorie_suppr");
-  updateSelectOptions(select, type);
-}
-
-function updateSelectOptions(selectElement, type) {
-  const firstOption = selectElement.options[0];
+// Fonction universelle pour remplir les selects avec option pré-sélectionnée
+function updateSelectOptions(selectId, type, selectedValue=null) {
+  const selectElement = document.getElementById(selectId);
   selectElement.innerHTML = "";
-  if (firstOption) selectElement.appendChild(firstOption);
+  
+  const defaultOption = document.createElement("option");
+  defaultOption.value = "";
+  defaultOption.textContent = "-- Sélectionnez une catégorie --";
+  defaultOption.disabled = true;
+  defaultOption.selected = true;
+  selectElement.appendChild(defaultOption);
 
   let data = [];
   if (type === "paiement") data = categoriesPaiement;
@@ -113,13 +122,19 @@ function updateSelectOptions(selectElement, type) {
     const option = document.createElement("option");
     option.value = cat;
     option.textContent = cat;
+    if (selectedValue && selectedValue === cat) option.selected = true;
     selectElement.appendChild(option);
   });
 }
 
-document.addEventListener("DOMContentLoaded", () => {
-  updateSelectAncienneCategorie();
-  updateSelectCategorieSuppr();
+// Initialisation au chargement
+document.addEventListener('DOMContentLoaded', () => {
+  // Remplir selects si un type est déjà choisi
+  const modifType = document.getElementById("type_categorie_modif").value;
+  if(modifType) updateSelectOptions('ancienne_categorie', modifType, '{{ request.form.get("ancienne_categorie","") }}');
+
+  const supprType = document.getElementById("type_categorie_suppr").value;
+  if(supprType) updateSelectOptions('categorie_suppr', supprType, '{{ request.form.get("categorie_suppr","") }}');
 });
 </script>
 {% endblock %}

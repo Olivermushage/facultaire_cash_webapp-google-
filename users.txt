@@ -9,3 +9,28 @@ kimbwen2025
 
 
 adminFST@==
+
+onlinefstulpgl2@ulpgl.net
+Google sheet API
+ID facultairecashwebapp
+facultairecashwebapp@facultairecashwebapp.iam.gserviceaccount.com
+Google drive API
+ID facultairecashwebapp-516
+facultairecashwebapp-516@facultairecashwebapp.iam.gserviceaccount.com
+
+Compte de service 
+ID facultairecashwebapp-732
+facultairecashwebapp-732@facultairecashwebapp.iam.gserviceaccount.com
+
+autres_recettes 1QakO-nuZgr8T8mQ3pJklW7_qqszTACplZAd47qEtXn8
+categories_depense 1x-degdEMk7rBztoYIgQoiOxI_fFPZy-fYB1gLFfoiSw
+categories_paiement 1DgkohaQcI52pp3b2leAkr9BW3nJPhfnpqyocNXjwcCc
+classes 1R-7OVNXWgB0i2wQLePEInmzmVJ9t9T0QnvTNP_EvvXM
+cours_par_classe 1qs58ItKMQaN7xfq7BtpShfDA7ndnOYzlblBT0aC1GKg
+depenses_travaux 1E2iec-5D-euw7jXjIdE3SEb6IVDWEwKBglDkvyzUd8w
+comments 1hUNzMDZHypZxogEAdhCU9KXjnkkdB6U-I7gAxESp9Yo
+depenses 1m_MsgpmGSEYV1m6Z9E3q6K4zVBgwG_-X5xiDNEHfl-0
+recettes 1Tzkq6-AgGBV5ct4TS54EiG37bnkAGjcuKq4oiP8E5I0
+paiements 1wAItVrPkYMyB1D3FnPHRpDG4jKOqHEC0NL6T5XCTsCc
+caisse 1jtrkoMR5lm91W2SvVPcQB4I7VUYaAwl50ATixoH9wzQ
+facultaire_cash_webapp 1zmemDQexKAiaVCJkv_TttssWAr7nQOtHX57clnbXP_Q/

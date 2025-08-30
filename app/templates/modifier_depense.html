@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% block title %}Modifier dépense{% endblock %}
+
+{% block content %}
+<h1>Modifier dépense</h1>
+
+<form method="POST" class="form-default" style="max-width:500px;">
+
+    <!-- Catégorie -->
+    <div class="form-group">
+        <label for="categorie">Catégorie :</label>
+        <select id="categorie" name="categorie" class="select-default" onchange="toggleAutreCategorie()">
+            {% for c in categories %}
+                <option value="{{ c }}" {% if c == depense.CategorieDepense %}selected{% endif %}>{{ c }}</option>
+            {% endfor %}
+            <option value="Autre" {% if depense.CategorieDepense not in categories %}selected{% endif %}>Autre</option>
+        </select>
+        <input type="text" id="categorie_autre" name="categorie_autre" placeholder="Si autre"
+               value="{{ depense.CategorieDepense if depense.CategorieDepense not in categories else '' }}"
+               class="input-default" style="margin-top:5px; {% if depense.CategorieDepense in categories %}display:none;{% endif %}">
+    </div>
+
+    <!-- Description -->
+    <div class="form-group">
+        <label for="description">Description :</label>
+        <input type="text" id="description" name="description" value="{{ depense.Description or '' }}" class="input-default">
+    </div>
+
+    <!-- Date -->
+    <div class="form-group">
+        <label for="date_depense">Date :</label>
+        <input type="date" id="date_depense" name="date_depense" value="{{ depense.DateDepense or '' }}" class="input-default">
+    </div>
+
+    <!-- Montant -->
+    <div class="form-group">
+        <label for="montant">Montant :</label>
+        <input type="number" id="montant" name="montant" value="{{ depense.Montant or '' }}" step="0.01" min="0" class="input-default">
+    </div>
+
+    <!-- Actions -->
+    <div class="form-actions" style="margin-top:10px; display:flex; gap:10px;">
+        <button type="submit" class="btn-primary">Enregistrer</button>
+        <a href="{{ request.args.get('next', url_for('depenses.liste_depenses_autres')) }}" class="btn-secondary">Annuler</a>
+    </div>
+</form>
+
+<script>
+function toggleAutreCategorie() {
+    const select = document.getElementById('categorie');
+    const autreInput = document.getElementById('categorie_autre');
+    if (select.value === 'Autre') {
+        autreInput.style.display = 'block';
+    } else {
+        autreInput.style.display = 'none';
+        autreInput.value = '';
+    }
+}
+window.onload = toggleAutreCategorie;
+</script>
+
+{% endblock %}

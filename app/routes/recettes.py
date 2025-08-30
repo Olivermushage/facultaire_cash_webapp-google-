@@ -2,10 +2,7 @@ import logging
 from datetime import datetime
 from flask import Blueprint, render_template, request, redirect, url_for, flash, session
 from app.routes.auth import login_required
-from ..models.storage import (
-    lire_recettes, lire_categories_paiement,
-    enregistrer_autre_recette
-)
+from app.models import storage_gsheets as storage  # ✅ Google Sheets
 
 recettes_bp = Blueprint('recettes', __name__, template_folder='templates/recettes')
 
@@ -40,11 +37,8 @@ def validate_montant(montant_raw):
 @login_required
 def index_recettes():
     try:
-        df_recettes = lire_recettes()
-        if df_recettes.empty:
-            recettes_list = []
-        else:
-            recettes_list = df_recettes.to_dict(orient="records")
+        df_recettes = storage.lire_recettes()
+        recettes_list = df_recettes.to_dict(orient="records") if not df_recettes.empty else []
 
         recherche = request.args.get("recherche", "").strip().lower()
         if recherche:
@@ -75,7 +69,7 @@ def index_recettes():
 @login_required
 def ajouter_recette():
     try:
-        df_categories = lire_categories_paiement()
+        df_categories = storage.lire_categories_paiement()
         categories = df_categories.get('Categorie', []).dropna().tolist()
     except Exception:
         logging.exception("Erreur lecture catégories recettes")
@@ -92,18 +86,15 @@ def ajouter_recette():
 
         erreurs = []
 
-        # Validation du type
         if type_recette not in ["standard", "manuelle"]:
             erreurs.append("Le type de recette sélectionné n'est pas valide.")
 
-        # Validation de la catégorie si standard
         if type_recette == "standard":
             if not categorie:
                 erreurs.append("Une catégorie est requise pour une recette standard.")
             elif categories and categorie not in categories:
                 erreurs.append(f"La catégorie '{categorie}' n'est pas valide.")
 
-        # Validation du montant
         try:
             montant = validate_montant(montant_raw)
         except ValueError as ve:
@@ -125,20 +116,13 @@ def ajouter_recette():
             )
 
         date = datetime.now().strftime("%Y-%m-%d")
-        utilisateur = session.get("username", "inconnu")  # ✅ utilisation de session à la place de current_user
+        utilisateur = session.get("username", "inconnu")
 
         try:
-            if type_recette == "standard":
-                description_finale = categorie
-            else:
-                description_finale = description or "Recette manuelle"
+            description_finale = categorie if type_recette == "standard" else (description or "Recette manuelle")
+            details = description_finale + (f" | Commentaire : {commentaire}" if commentaire else "")
 
-            # Inclure le commentaire si fourni
-            details = description_finale
-            if commentaire:
-                details += f" | Commentaire : {commentaire}"
-
-            enregistrer_autre_recette(
+            storage.enregistrer_autre_recette(
                 nom_classe, etudiant, type_recette, montant,
                 details, date, utilisateur
             )
@@ -149,7 +133,6 @@ def ajouter_recette():
             flash(f"Erreur lors de l'ajout : {str(e)}", "error")
             return redirect(url_for('recettes.ajouter_recette'))
 
-    # GET
     return render_template(
         'ajouter_recette.html',
         categories=categories,
@@ -161,7 +144,7 @@ def ajouter_recette():
 @login_required
 def gerer_categories_recette():
     try:
-        df_categories = lire_categories_paiement()
+        df_categories = storage.lire_categories_paiement()
         categories = df_categories.get('Categorie', []).dropna().tolist()
     except Exception:
         logging.exception("Erreur lecture catégories recettes")
@@ -174,31 +157,25 @@ def gerer_categories_recette():
         nouvelle_categorie = request.form.get("nouvelle_categorie", "").strip()
 
         try:
-            from ..models.storage import (
-                ajouter_categorie_paiement,
-                modifier_categorie_paiement,
-                supprimer_categorie_paiement
-            )
-
             if action == "ajouter":
                 if not nom_categorie:
                     flash("Le nom de la catégorie est requis.", "error")
                 else:
-                    ajouter_categorie_paiement(nom_categorie)
+                    storage.ajouter_categorie_paiement(nom_categorie)
                     flash(f"Catégorie '{nom_categorie}' ajoutée avec succès.", "success")
 
             elif action == "modifier":
                 if not ancienne_categorie or not nouvelle_categorie:
                     flash("Le nom actuel et le nouveau nom sont requis.", "error")
                 else:
-                    modifier_categorie_paiement(ancienne_categorie, nouvelle_categorie)
+                    storage.modifier_categorie_paiement(ancienne_categorie, nouvelle_categorie)
                     flash(f"Catégorie '{ancienne_categorie}' modifiée en '{nouvelle_categorie}'.", "success")
 
             elif action == "supprimer":
                 if not nom_categorie:
                     flash("Le nom de la catégorie à supprimer est requis.", "error")
                 else:
-                    supprimer_categorie_paiement(nom_categorie)
+                    storage.supprimer_categorie_paiement(nom_categorie)
                     flash(f"Catégorie '{nom_categorie}' supprimée.", "success")
             else:
                 flash("Action inconnue.", "error")
@@ -209,7 +186,6 @@ def gerer_categories_recette():
 
         return redirect(url_for('recettes.gerer_categories_recette'))
 
-    # GET
     return render_template(
         'gerer_categories_recette.html',
         categories=categories,

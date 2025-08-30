@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+
+{% block title %}Ajouter des étudiants{% endblock %}
+
+{% block content %}
+<h2>➕ Ajouter des étudiants à la classe {{ nom_classe }}</h2>
+
+{# Messages flash #}
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    <div class="flash-container">
+      {% for category, message in messages %}
+        <div class="flash-message
+            {% if category == 'success' %}flash-success{% endif %}
+            {% if category == 'error' %}flash-error{% endif %}
+            {% if category == 'warning' %}flash-warning{% endif %}
+            {% if category == 'info' %}flash-info{% endif %}">
+          {{ message }}
+          <button class="flash-close-btn" onclick="this.parentElement.style.display='none';">×</button>
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+{% endwith %}
+
+<form method="POST" class="form-default">
+    <label for="etudiants" class="label-default">Noms des étudiants (un par ligne) <span class="text-danger">*</span></label>
+    <textarea id="etudiants" name="etudiants" rows="6" required class="textarea-default">{{ request.form.get('etudiants', '') }}</textarea>
+
+    <div class="form-actions" style="margin-top: 15px;">
+        <a href="{{ url_for('classes.detail_classe', nom_classe=nom_classe) }}" class="btn-link">⬅ Retour à la classe</a>
+        <button type="submit" class="btn-success">Ajouter</button>
+    </div>
+</form>
+{% endblock %}

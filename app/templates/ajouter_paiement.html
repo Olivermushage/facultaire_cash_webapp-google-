@@ -3,15 +3,20 @@
 {% block title %}Ajouter paiement pour {{ etudiant }}{% endblock %}
 
 {% block content %}
-<h1>Ajouter un paiement pour {{ etudiant }}</h1>
+<h2>💰 Ajouter un paiement pour {{ etudiant }}</h2>
 
-<!-- Messages flash -->
+{# Messages flash #}
 {% with messages = get_flashed_messages(with_categories=true) %}
   {% if messages %}
     <div class="flash-container" style="margin-bottom: 15px;">
       {% for category, message in messages %}
-        <div class="flash-message flash-{{ category }}">
+        <div class="flash-message
+            {% if category == 'success' %}flash-success{% endif %}
+            {% if category == 'error' %}flash-error{% endif %}
+            {% if category == 'warning' %}flash-warning{% endif %}
+            {% if category == 'info' %}flash-info{% endif %}">
           {{ message }}
+          <button class="flash-close-btn" onclick="this.parentElement.style.display='none';">×</button>
         </div>
       {% endfor %}
     </div>
@@ -21,41 +26,29 @@
 <form method="post" class="form-default">
 
   <!-- Catégorie -->
-  <div class="form-group">
-    <label for="categorie" class="label-default">
-      Catégorie de paiement <span class="text-danger">*</span>
-    </label>
-    <select name="categorie" id="categorie" required aria-required="true" class="input-default">
-      <option value="" disabled {% if not request.form.get('categorie') %}selected{% endif %}>-- Choisissez une catégorie --</option>
-      {% for cat in categories %}
-        <option value="{{ cat }}" {% if cat == request.form.get('categorie') %}selected{% endif %}>{{ cat }}</option>
-      {% endfor %}
-    </select>
-    <small class="form-text">Sélectionnez la catégorie appropriée.</small>
-  </div>
+  <label for="categorie" class="label-default">Catégorie de paiement <span class="text-danger">*</span></label>
+  <select name="categorie" id="categorie" required class="input-default">
+    <option value="" disabled {% if not request.form.get('categorie') %}selected{% endif %}>-- Choisissez une catégorie --</option>
+    {% for cat in categories %}
+      <option value="{{ cat }}" {% if cat == request.form.get('categorie') %}selected{% endif %}>{{ cat }}</option>
+    {% endfor %}
+  </select>
+  <small class="text-muted">Sélectionnez la catégorie appropriée.</small>
 
   <!-- Montant -->
-  <div class="form-group">
-    <label for="montant" class="label-default">
-      Montant (USD) <span class="text-danger">*</span>
-    </label>
-    <input type="number" step="0.01" min="0.01" name="montant" id="montant" required
-           value="{{ request.form.get('montant', '') }}" class="input-default">
-    <small class="form-text">Entrez le montant payé en dollars américains.</small>
-  </div>
+  <label for="montant" class="label-default">Montant (USD) <span class="text-danger">*</span></label>
+  <input type="number" step="0.01" min="0.01" name="montant" id="montant"
+         value="{{ request.form.get('montant', '') }}" required class="input-default">
+  <small class="text-muted">Entrez le montant payé en dollars américains.</small>
 
   <!-- Date paiement -->
-  <div class="form-group">
-    <label for="date_paiement" class="label-default">
-      Date de paiement <span class="text-danger">*</span>
-    </label>
-    <input type="date" name="date_paiement" id="date_paiement" required
-           value="{{ request.form.get('date_paiement', '') }}" class="input-default">
-    <small class="form-text">Date à laquelle le paiement a été effectué.</small>
-  </div>
+  <label for="date_paiement" class="label-default">Date de paiement <span class="text-danger">*</span></label>
+  <input type="date" name="date_paiement" id="date_paiement"
+         value="{{ request.form.get('date_paiement', '') }}" required class="input-default">
+  <small class="text-muted">Date à laquelle le paiement a été effectué.</small>
 
   <!-- Actions -->
-  <div class="form-actions">
+  <div class="form-actions" style="margin-top: 15px;">
     <a href="{{ url_for('classes.detail_classe', nom_classe=nom_classe) }}" class="btn-link">Annuler</a>
     <button type="submit" class="btn-success">Enregistrer</button>
   </div>

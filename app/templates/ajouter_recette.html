@@ -3,15 +3,20 @@
 {% block title %}Ajouter une recette{% endblock %}
 
 {% block content %}
-<h1>Ajouter une recette</h1>
+<h2>💵 Ajouter une recette</h2>
 
-<!-- Messages flash -->
+{# Messages flash #}
 {% with messages = get_flashed_messages(with_categories=true) %}
   {% if messages %}
     <div class="flash-container" style="margin-bottom: 15px;">
       {% for category, message in messages %}
-        <div class="flash-message flash-{{ category }}">
+        <div class="flash-message
+            {% if category == 'success' %}flash-success{% endif %}
+            {% if category == 'error' %}flash-error{% endif %}
+            {% if category == 'warning' %}flash-warning{% endif %}
+            {% if category == 'info' %}flash-info{% endif %}">
           {{ message }}
+          <button class="flash-close-btn" onclick="this.parentElement.style.display='none';">×</button>
         </div>
       {% endfor %}
     </div>
@@ -21,56 +26,48 @@
 <form method="post" class="form-default">
 
   <!-- Type de recette -->
-  <div class="form-group">
-    <label for="type_recette">Type de recette <span class="text-danger">*</span></label>
-    <select id="type_recette" name="type_recette" onchange="toggleFields()" required class="input-default">
-      <option value="" disabled {% if not type_recette_valeur %}selected{% endif %}>-- Choisissez un type --</option>
-      <option value="standard" {% if type_recette_valeur == 'standard' %}selected{% endif %}>Recette standard</option>
-      <option value="manuelle" {% if type_recette_valeur == 'manuelle' %}selected{% endif %}>Recette manuelle</option>
-    </select>
-    <small class="form-text">Sélectionnez le type de recette.</small>
-  </div>
+  <label for="type_recette" class="label-default">Type de recette <span class="text-danger">*</span></label>
+  <select id="type_recette" name="type_recette" onchange="toggleFields()" required class="input-default">
+    <option value="" disabled {% if not type_recette_valeur %}selected{% endif %}>-- Choisissez un type --</option>
+    <option value="standard" {% if type_recette_valeur == 'standard' %}selected{% endif %}>Recette standard</option>
+    <option value="manuelle" {% if type_recette_valeur == 'manuelle' %}selected{% endif %}>Recette manuelle</option>
+  </select>
+  <small class="text-muted">Sélectionnez le type de recette.</small>
 
   <!-- Catégorie (visible seulement si "standard") -->
   <div id="categorie_block" class="form-group" style="display: none;">
-    <label for="categorie">Catégorie <span class="text-danger">*</span></label>
+    <label for="categorie" class="label-default">Catégorie <span class="text-danger">*</span></label>
     <select id="categorie" name="categorie" class="input-default">
       <option value="" disabled {% if not request.form.get('categorie') %}selected{% endif %}>-- Choisissez une catégorie --</option>
       {% for cat in categories %}
         <option value="{{ cat }}" {% if request.form.get('categorie') == cat %}selected{% endif %}>{{ cat }}</option>
       {% endfor %}
     </select>
-    <small class="form-text">Choisissez une catégorie définie dans le fichier Excel.</small>
+    <small class="text-muted">Choisissez une catégorie définie dans le fichier Excel.</small>
   </div>
 
   <!-- Montant -->
-  <div class="form-group">
-    <label for="montant" class="label-default">
-      Montant (USD) <span class="text-danger">*</span>
-    </label>
-    <input type="number" id="montant" name="montant" step="0.01" min="0.01" required
-           value="{{ montant_valeur or '' }}" class="input-default">
-    <small class="form-text">Entrez le montant de la recette.</small>
-  </div>
+  <label for="montant" class="label-default">Montant (USD) <span class="text-danger">*</span></label>
+  <input type="number" id="montant" name="montant" step="0.01" min="0.01" required
+         value="{{ montant_valeur or '' }}" class="input-default">
+  <small class="text-muted">Entrez le montant de la recette.</small>
 
   <!-- Description (visible seulement si "manuelle") -->
-  <div class="form-group" id="description_block" style="display: none;">
+  <div id="description_block" class="form-group" style="display: none;">
     <label for="description" class="label-default">Description</label>
     <input type="text" id="description" name="description" class="input-default"
            value="{{ description_valeur or '' }}" placeholder="Optionnel : détaillez la recette">
-    <small class="form-text">Ajoutez une description si nécessaire.</small>
+    <small class="text-muted">Ajoutez une description si nécessaire.</small>
   </div>
 
   <!-- Commentaire (toujours visible) -->
-  <div class="form-group">
-    <label for="commentaire" class="label-default">Commentaire</label>
-    <textarea id="commentaire" name="commentaire" rows="3" class="input-default"
-              placeholder="Ex : note interne, précision sur le paiement...">{{ commentaire_valeur or '' }}</textarea>
-    <small class="form-text">Ce champ est optionnel. Sert pour les remarques internes.</small>
-  </div>
+  <label for="commentaire" class="label-default">Commentaire</label>
+  <textarea id="commentaire" name="commentaire" rows="3" class="input-default"
+            placeholder="Ex : note interne, précision sur le paiement...">{{ commentaire_valeur or '' }}</textarea>
+  <small class="text-muted">Ce champ est optionnel. Sert pour les remarques internes.</small>
 
   <!-- Actions -->
-  <div class="form-actions">
+  <div class="form-actions" style="margin-top: 15px;">
     <a href="{{ url_for('recettes.index_recettes') }}" class="btn-link">Annuler</a>
     <button type="submit" class="btn-success">Ajouter</button>
   </div>
@@ -98,6 +95,7 @@ function toggleFields() {
     descBlock.style.display = "none";
   }
 }
+
 window.onload = toggleFields;
 </script>
 {% endblock %}

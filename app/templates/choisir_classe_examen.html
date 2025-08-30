@@ -1,0 +1,72 @@
+<!-- templates/choisir_classe_examen.html -->
+{% extends "base.html" %}
+
+{% block title %}Choisir une classe pour les examens{% endblock %}
+
+{% block content %}
+<h1>📚 Choisir une classe pour consulter les dépenses d'examen</h1>
+
+<!-- Messages flash -->
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    <div class="flash-container">
+      {% for category, message in messages %}
+        <div class="flash-message flash-{{ category }}">
+          {{ message }}
+          <button type="button" onclick="this.parentElement.style.display='none';">&times;</button>
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+{% endwith %}
+
+<!-- Formulaire de recherche -->
+<form method="get" class="form-inline" style="margin-bottom:20px; max-width:700px;">
+    <input type="text" name="recherche" value="{{ request.args.get('recherche', '') }}"
+           placeholder="🔎 Rechercher une classe..." class="input-default" style="flex-grow:1;">
+    <button type="submit" class="btn-primary">Filtrer</button>
+    {% if request.args.get('recherche') %}
+        <a href="{{ url_for('depenses.choisir_classe_depenses_examen') }}" class="link-default">↩ Réinitialiser</a>
+    {% endif %}
+</form>
+
+<!-- Liste des classes -->
+<section class="classes-list table-scroll">
+    {% if classes %}
+        <ul class="liste-classes">
+            {% for classe in classes %}
+                <li>
+                    <a href="{{ url_for('depenses.depenses_examen', nom_classe=classe) }}" class="link-default">
+                        {{ classe }}
+                    </a>
+                </li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p class="text-center">Aucune classe trouvée.</p>
+    {% endif %}
+</section>
+
+<!-- Pagination -->
+{% if total_pages %}
+<div class="pagination mt-20">
+    {% if page > 1 %}
+        <a href="{{ url_for('depenses.choisir_classe_depenses_examen', page=page-1, recherche=request.args.get('recherche','')) }}" class="link-default">&laquo; Précédent</a>
+    {% else %}
+        <span class="disabled">&laquo; Précédent</span>
+    {% endif %}
+
+    <span>Page {{ page }} sur {{ total_pages }}</span>
+
+    {% if page < total_pages %}
+        <a href="{{ url_for('depenses.choisir_classe_depenses_examen', page=page+1, recherche=request.args.get('recherche','')) }}" class="link-default">Suivant &raquo;</a>
+    {% else %}
+        <span class="disabled">Suivant &raquo;</span>
+    {% endif %}
+</div>
+{% endif %}
+
+<p>
+  <a href="{{ url_for('depenses.depenses_index') }}" class="btn-secondary">← Retour aux dépenses</a>
+</p>
+{% endblock %}

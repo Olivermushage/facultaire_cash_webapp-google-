@@ -3,34 +3,50 @@
 {% block title %}Créer une nouvelle classe{% endblock %}
 
 {% block content %}
-<h1>Créer une nouvelle classe</h1>
+<h2>➕ Créer une nouvelle classe</h2>
+
+{# Messages flash #}
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    <div class="flash-container" style="margin-bottom: 15px;">
+      {% for category, message in messages %}
+        <div class="flash-message
+            {% if category == 'success' %}flash-success{% endif %}
+            {% if category == 'error' %}flash-error{% endif %}
+            {% if category == 'warning' %}flash-warning{% endif %}
+            {% if category == 'info' %}flash-info{% endif %}">
+          {{ message }}
+          <button class="flash-close-btn" onclick="this.parentElement.style.display='none';">×</button>
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+{% endwith %}
 
 <form method="post" class="form-default">
-  <div class="form-group">
-    <label for="nom_classe" class="label-default">
-      Nom de la classe <span class="text-danger">*</span>
-    </label>
-    <input type="text" id="nom_classe" name="nom_classe" required
-           placeholder="Ex: Classe de Mathématiques"
-           value="{{ request.form.get('nom_classe', '') }}"
-           class="input-default">
-    <div class="form-help">Nom unique de la classe</div>
-  </div>
 
-  <div class="form-group">
-    <label for="etudiants" class="label-default">
-      Liste des étudiants <span class="text-danger">*</span><br>
-      <small>Entrez un étudiant par ligne</small>
-    </label>
-    <textarea id="etudiants" name="etudiants" required rows="8"
-              placeholder="Jean Dupont&#10;Marie Curie&#10;..."
-              class="input-default">{{ request.form.get('etudiants', '') }}</textarea>
-    <div class="form-help">Saisissez les noms complets des étudiants</div>
-  </div>
+  <!-- Nom de la classe -->
+  <label for="nom_classe" class="label-default">Nom de la classe <span class="text-danger">*</span></label>
+  <input type="text" id="nom_classe" name="nom_classe" required
+         placeholder="Ex: Classe de Mathématiques"
+         value="{{ request.form.get('nom_classe', '') }}"
+         class="input-default">
+  <small class="form-text">Nom unique de la classe</small>
 
-  <div class="form-actions">
-    <a href="{{ url_for('main.index') }}" class="link-default">Annuler</a>
-    <button type="submit" class="btn-primary">Créer la classe</button>
+  <!-- Liste étudiants -->
+  <label for="etudiants" class="label-default">
+    Liste des étudiants <span class="text-danger">*</span><br>
+    <small>Entrez un étudiant par ligne</small>
+  </label>
+  <textarea id="etudiants" name="etudiants" required rows="8"
+            placeholder="Jean Dupont&#10;Marie Curie&#10;..."
+            class="input-default">{{ request.form.get('etudiants', '') }}</textarea>
+  <small class="form-text">Saisissez les noms complets des étudiants</small>
+
+  <!-- Actions -->
+  <div class="form-actions" style="margin-top: 15px;">
+    <a href="{{ url_for('main.index') }}" class="btn-link">⬅ Annuler</a>
+    <button type="submit" class="btn-success">✅ Créer la classe</button>
   </div>
 
   <div class="form-note">

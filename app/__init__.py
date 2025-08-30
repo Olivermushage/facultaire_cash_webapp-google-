@@ -3,23 +3,23 @@ from flask import Flask, session
 from .config import Config
 
 def create_app():
-    """Créer et configurer l'application Flask."""
-    
-    # Création de l'application Flask avec dossiers templates et static personnalisés
+    """Créer et configurer l'application Flask avec stockage Google Sheets."""
+
+    # Création de l'application Flask avec dossiers templates et static
     app = Flask(
         __name__,
         template_folder=os.path.join(os.path.dirname(__file__), "templates"),
         static_folder=os.path.join(os.path.dirname(__file__), "static")
     )
 
-    # Charger la configuration depuis Config ou variables d'environnement
+    # Charger la configuration
     app.config.from_object(Config)
 
-    # Initialisation des fichiers Excel nécessaires
-    from .models.storage import init_all_files
-    init_all_files()
+    # Initialisation du stockage Google Sheets
+    from .models import storage_gsheets as storage
+    storage.init_all_files()
 
-    # Import et enregistrement des Blueprints
+    # Import des blueprints
     from .routes.auth import auth_bp
     from .routes.main import main_bp
     from .routes.classes import classes_bp
@@ -34,11 +34,11 @@ def create_app():
     app.register_blueprint(recettes_bp, url_prefix="/recettes")
     app.register_blueprint(categories_bp, url_prefix="/categories")
 
-    # Création automatique de l'administrateur par défaut s'il n'existe pas
+    # Création automatique de l'administrateur par défaut
     from .models.user import create_admin_default
     create_admin_default()
 
-    # Injection de current_user personnalisé pour les templates
+    # Injection de current_user pour les templates
     @app.context_processor
     def inject_user():
         class CurrentUser:

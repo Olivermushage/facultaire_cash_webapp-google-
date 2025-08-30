@@ -18,5 +18,10 @@
     "username": "admin",
     "password": "pbkdf2:sha256:1000000$9Kmjyw0LqBX5zzff$5dd05e8e41d638ee63f0d79d34dbf593bd258168b03c57c42d33089e56c737ce",
     "role": "admin"
+  },
+  {
+    "username": "SAF",
+    "password": "pbkdf2:sha256:1000000$fZ0K3q6kq4W7ZWV4$f0b077adaa5db8f53a9015f8a40f5fd2e527e1c43714a6c8a83cd9f1f0f748c7",
+    "role": "user"
   }
 ]

@@ -1,3 +1,4 @@
+<!-- templates/liste_depenses.html -->
 {% extends "base.html" %}
 
 {% block title %}{{ titre }}{% endblock %}
@@ -8,90 +9,84 @@
 <!-- Messages flash -->
 {% with messages = get_flashed_messages(with_categories=true) %}
   {% if messages %}
-    <div style="max-width: 700px; margin-bottom: 20px;">
+    <div class="flash-container">
       {% for category, message in messages %}
-        <div class="flash-message flash-{{ category }}" role="alert" style="padding:10px; border-radius:4px; margin-bottom:8px;
-          {% if category == 'success' %}background-color:#d4edda; color:#155724;
-          {% elif category == 'error' %}background-color:#f8d7da; color:#721c24;
-          {% elif category == 'warning' %}background-color:#fff3cd; color:#856404;
-          {% else %}background-color:#cce5ff; color:#004085;{% endif %}">
+        <div class="flash-message flash-{{ category }}">
           {{ message }}
-          <button type="button" aria-label="Fermer le message" onclick="this.parentElement.style.display='none';"
-                  style="float:right; background:none; border:none; font-weight:bold; cursor:pointer; color:inherit;">&times;</button>
+          <button type="button" onclick="this.parentElement.style.display='none';">&times;</button>
         </div>
       {% endfor %}
     </div>
   {% endif %}
 {% endwith %}
 
-<!-- Formulaire de recherche -->
-<form method="get" aria-label="Formulaire de recherche des dépenses" style="margin-bottom: 18px; display: flex; gap: 10px; align-items: center; max-width: 700px;">
+<!-- Recherche -->
+<form method="get" class="form-inline" style="margin-bottom:20px; max-width:700px;">
     <input type="search" name="recherche" value="{{ request.args.get('recherche', '') }}"
-           placeholder="Rechercher par description ou catégorie..." aria-describedby="rechercheHelp"
-           style="padding: 6px 12px; font-size: 1em; border-radius: 3px; border: 1px solid #ccc; flex-grow: 1;">
-    <button type="submit" style="padding: 6px 16px; border: none; color: white; background: #036; border-radius: 3px; cursor: pointer;" aria-label="Filtrer la liste des dépenses">
-        Filtrer
-    </button>
+           placeholder="Rechercher par description ou catégorie..."
+           class="input-default" style="flex-grow:1;">
+    <button type="submit" class="btn-primary">🔍 Filtrer</button>
     {% if request.args.get('recherche') %}
-        <a href="{{ url_for(request.endpoint, nom_classe=nom_classe) }}" style="color: #888; margin-left: 6px;">Réinitialiser</a>
+        <a href="{{ url_for(request.endpoint, nom_classe=nom_classe) }}" class="link-default">↩ Réinitialiser</a>
     {% endif %}
 </form>
-<div id="rechercheHelp" style="font-size: 0.85em; color: #666; max-width: 700px; margin-bottom: 10px;">
-    Filtrez la liste des dépenses par description ou catégorie.
-</div>
 
 <!-- Tableau des dépenses -->
-<div class="table-scroll" style="max-width: 900px; overflow-x: auto; margin-bottom: 20px;">
-<table class="table-default" style="width: 100%;" role="table" aria-describedby="descriptionTable">
-    <caption id="descriptionTable" style="caption-side: bottom; text-align: left; font-style: italic; color: #666;">
-      Liste des dépenses d'examen filtrées par critères.
-    </caption>
+<section class="table-section table-scroll">
+  <table class="table-default">
     <thead>
-        <tr>
-            <th scope="col">Cours</th>
-            <th scope="col">Date Examen</th>
-            <th scope="col">Catégorie</th>
-            <th scope="col">Description</th>
-            <th scope="col">Utilisateur</th>
-            <th scope="col" style="text-align: right;">Montant (USD)</th>
-        </tr>
+      <tr>
+        <th>Cours</th>
+        <th>Date Examen</th>
+        <th>Catégorie</th>
+        <th>Description</th>
+        <th>Utilisateur</th>
+        <th style="text-align:right;">Montant (USD)</th>
+        <th style="text-align:center;">Actions</th>
+      </tr>
     </thead>
     <tbody>
-        {% for depense in depenses %}
-        <tr>
-            <td>{{ depense.NomCours or '-' }}</td>
-            <td>{{ depense.DateExamen or '-' }}</td>
-            <td>{{ depense.CategorieDepense }}</td>
-            <td>{{ depense.Description or '-' }}</td>
-            <td>{{ depense.utilisateur or '-' }}</td>
-            <td style="text-align: right;">{{ "%.2f"|format(depense.Montant) }} USD</td>
-        </tr>
-        {% else %}
-        <tr>
-            <td colspan="6" style="text-align:center; font-style: italic; color: #666;">Aucune dépense enregistrée.</td>
-        </tr>
-        {% endfor %}
+      {% for depense in depenses %}
+      <tr>
+        <td>{{ depense.NomCours or '-' }}</td>
+        <td>{{ depense.DateExamen or '-' }}</td>
+        <td>{{ depense.CategorieDepense }}</td>
+        <td>{{ depense.Description or '-' }}</td>
+        <td>{{ depense.utilisateur or '-' }}</td>
+        <td style="text-align:right;">{{ "%.2f"|format(depense.Montant) }} USD</td>
+        <td style="text-align:center;">
+          {% if depense.ID %}
+            <a href="{{ url_for('depenses.modifier_depense', depense_id=depense.ID) }}" class="link-default">✏️ Modifier</a>
+          {% else %}
+            <span class="text-muted">ID manquant</span>
+          {% endif %}
+        </td>
+      </tr>
+      {% else %}
+      <tr><td colspan="7" class="text-center">Aucune dépense enregistrée.</td></tr>
+      {% endfor %}
     </tbody>
-</table>
-</div>
+  </table>
+</section>
 
 <!-- Pagination -->
-<nav role="navigation" aria-label="Pagination des dépenses" style="margin-top: 10px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+<div class="pagination">
     {% if page > 1 %}
-        <a href="{{ url_for(request.endpoint, page=page-1, recherche=request.args.get('recherche',''), nom_classe=nom_classe) }}" style="color:#036;" aria-label="Page précédente">&laquo; Précédent</a>
+        <a href="{{ url_for(request.endpoint, page=page-1, recherche=request.args.get('recherche',''), nom_classe=nom_classe) }}" class="link-default">&laquo; Précédent</a>
     {% else %}
-        <span style="color: gray;" aria-disabled="true">&laquo; Précédent</span>
+        <span class="disabled">&laquo; Précédent</span>
     {% endif %}
-    <span aria-live="polite">Page {{ page }} sur {{ total_pages }}</span>
+
+    <span>Page {{ page }} sur {{ total_pages }}</span>
+
     {% if page < total_pages %}
-        <a href="{{ url_for(request.endpoint, page=page+1, recherche=request.args.get('recherche',''), nom_classe=nom_classe) }}" style="color:#036;" aria-label="Page suivante">Suivant &raquo;</a>
+        <a href="{{ url_for(request.endpoint, page=page+1, recherche=request.args.get('recherche',''), nom_classe=nom_classe) }}" class="link-default">Suivant &raquo;</a>
     {% else %}
-        <span style="color: gray;" aria-disabled="true">Suivant &raquo;</span>
+        <span class="disabled">Suivant &raquo;</span>
     {% endif %}
-</nav>
+</div>
 
-<p style="margin-top: 20px;">
-  <a href="{{ url_for('depenses.depenses_index') }}" style="color:#036;">← Retour aux dépenses</a>
+<p>
+  <a href="{{ url_for('depenses.depenses_index') }}" class="btn-secondary">← Retour aux dépenses</a>
 </p>
-
 {% endblock %}

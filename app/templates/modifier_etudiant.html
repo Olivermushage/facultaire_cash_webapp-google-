@@ -1,5 +1,4 @@
 {% extends "base.html" %}
-
 {% block title %}Modifier l'étudiant {{ ancien_nom }}{% endblock %}
 
 {% block content %}
@@ -8,37 +7,41 @@
 <!-- Messages flash -->
 {% with messages = get_flashed_messages(with_categories=true) %}
   {% if messages %}
-    <div class="flash-container">
+    <div class="flash-container" style="max-width:700px; margin-bottom:20px;">
       {% for category, message in messages %}
-        <div class="flash-message flash-{{ category }}" role="alert">
+        <div class="flash-message flash-{{ category }}" role="alert" style="padding:10px; border-radius:4px; margin-bottom:8px;">
           {{ message }}
-          <button type="button" aria-label="Fermer le message" class="flash-close-btn"
-                  onclick="this.parentElement.style.display='none';">&times;</button>
+          <button type="button" aria-label="Fermer le message" onclick="this.parentElement.style.display='none';"
+                  style="float:right; background:none; border:none; font-weight:bold; cursor:pointer; color:inherit;">&times;</button>
         </div>
       {% endfor %}
     </div>
   {% endif %}
 {% endwith %}
 
-<!-- Formulaire de modification -->
-<form method="post" class="formulaire-modification" aria-label="Formulaire de modification de l'étudiant">
+<form method="post" class="form-default" style="max-width:500px;">
+
+    <!-- Nom de l'étudiant -->
     <div class="form-group">
-        <label for="nom">Nom de l'étudiant <span class="required">*</span></label>
+        <label for="nom">Nom de l'étudiant <span class="text-danger">*</span></label>
         <input type="text" id="nom" name="nom" required
                value="{{ request.form.get('nom', ancien_nom) }}"
-               aria-required="true" class="input-text">
+               class="input-default">
     </div>
 
+    <!-- Commentaire -->
     <div class="form-group">
         <label for="commentaire">Commentaire</label>
         <textarea id="commentaire" name="commentaire" rows="4"
                   placeholder="Ajouter un commentaire optionnel"
-                  class="textarea-text">{{ request.form.get('commentaire', commentaire)|e }}</textarea>
+                  class="textarea-default">{{ request.form.get('commentaire', commentaire)|e }}</textarea>
     </div>
 
-    <div class="form-actions">
-        <a href="{{ url_for('classes.detail_classe', nom_classe=nom_classe) }}" class="link-annuler">Annuler</a>
-        <button type="submit" class="btn-submit">Modifier</button>
+    <!-- Actions -->
+    <div class="form-actions" style="margin-top:10px; display:flex; gap:10px;">
+        <a href="{{ url_for('classes.detail_classe', nom_classe=nom_classe) }}" class="btn-secondary">Annuler</a>
+        <button type="submit" class="btn-primary">Modifier</button>
     </div>
+
 </form>
 {% endblock %}

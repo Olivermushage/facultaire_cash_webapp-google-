@@ -6,7 +6,6 @@ from ..models.user import get_user_by_username, create_user
 
 auth_bp = Blueprint("auth", __name__, template_folder="templates/auth")
 
-
 # === Helpers ===
 def is_safe_url(target):
     """Vérifie si l'URL est sûre pour la redirection."""
@@ -14,17 +13,15 @@ def is_safe_url(target):
     test_url = urlparse(urljoin(request.host_url, target))
     return test_url.scheme in ("http", "https") and ref_url.netloc == test_url.netloc
 
-
 def login_required(f):
-    """Décorateur simple pour protéger les routes (sans Flask-Login)."""
+    """Décorateur pour protéger les routes nécessitant un utilisateur connecté."""
     @wraps(f)
-    def decorated_view(*args, **kwargs):
-        if "user" not in session:
-            flash("Veuillez vous connecter pour accéder à cette page.", "warning")
+    def decorated_function(*args, **kwargs):
+        if not session.get("user"):
+            flash("Veuillez vous connecter pour accéder à cette page.", "error")
             return redirect(url_for("auth.login", next=request.url))
         return f(*args, **kwargs)
-    return decorated_view
-
+    return decorated_function
 
 def admin_required(f):
     """Décorateur pour protéger les routes réservées aux admins."""
@@ -35,7 +32,6 @@ def admin_required(f):
             return redirect(url_for("main.index"))
         return f(*args, **kwargs)
     return decorated_view
-
 
 # === Routes ===
 @auth_bp.route("/login", methods=["GET", "POST"])
@@ -48,19 +44,18 @@ def login():
             flash("Nom d'utilisateur et mot de passe requis.", "error")
             return redirect(url_for("auth.login"))
 
-        user = get_user_by_username(username)
-        if user is None or not check_password_hash(user["password"], password):
+        user_dict = get_user_by_username(username)
+        if user_dict is None or not check_password_hash(user_dict["password"], password):
             flash("Nom d'utilisateur ou mot de passe incorrect.", "error")
             return redirect(url_for("auth.login"))
 
         # Mettre en session les infos utilisateur
         session.clear()
         session["user"] = username
-        session["role"] = user.get("role", "user")
+        session["role"] = user_dict.get("role", "user")
 
         flash(f"Bienvenue {username} ! Connexion réussie.", "success")
 
-        # Gestion de la redirection post-login
         next_page = request.args.get("next")
         if not next_page or not is_safe_url(next_page):
             next_page = url_for("main.index")
@@ -68,13 +63,12 @@ def login():
 
     return render_template("login.html")
 
-
 @auth_bp.route("/logout")
+@login_required
 def logout():
     session.clear()
     flash("Vous avez été déconnecté avec succès.", "success")
     return redirect(url_for("auth.login"))
-
 
 @auth_bp.route("/create_user", methods=["GET", "POST"])
 @login_required
