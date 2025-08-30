@@ -416,3 +416,60 @@ footer {
 .pagination span {
     font-weight: bold;
 }
+
+/* Responsive Sidebar (mobile/tablette) */
+@media (max-width: 768px) {
+  nav {
+    position: fixed;
+    left: -100%;
+    top: 0;
+    height: 100%;
+    width: 200px;
+    z-index: 2000;
+    transition: left 0.3s ease;
+    background-color: var(--primary-color);
+  }
+  nav.open {
+    left: 0;
+  }
+  main {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+
+  nav img {
+    max-width: 60px;
+  }
+
+  .hamburger-btn {
+    display: block;
+    position: fixed;
+    top: 10px;
+    left: 10px;
+    z-index: 2100;
+    background: none;
+    border: none;
+    color: white;
+    font-size: 1.5rem;
+    cursor: pointer;
+  }
+}
+
+/* Hidden hamburger button on desktop */
+.hamburger-btn {
+  display: none;
+}
+
+/* Scroll horizontal pour les tableaux */
+.table-default {
+  display: block;
+  overflow-x: auto;
+}
+
+/* Boutons plus grands sur très petit écran (smartphone) */
+@media (max-width: 480px) {
+  .btn-primary, .btn-secondary, .btn-success {
+    padding: 12px 24px;
+    font-size: 1.1em;
+  }
+}
