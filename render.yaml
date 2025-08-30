@@ -2,17 +2,17 @@ services:
   - type: web
     name: ulpgl-caisse
     env: python
-    plan: free
-    buildCommand: "pip install -r requirements.txt"
-    startCommand: "gunicorn -w 1 -b 0.0.0.0:$PORT wsgi:app"
+    region: frankfurt
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn 'app:create_app()' --bind 0.0.0.0:$PORT --workers 2 --threads 4 --timeout 120
     envVars:
-      - key: PYTHON_VERSION
-        value: 3.11.9
       - key: SECRET_KEY
-        generateValue: true
+        sync: false
+      - key: FLASK_DEBUG
+        value: "False"
       - key: DATA_FOLDER
-        value: /var/data
-    disk:
-      name: data-disk
-      mountPath: /var/data
-      sizeGB: 1
+        value: /data
+    disks:
+      - name: data
+        mountPath: /data
+        sizeGB: 2
