@@ -4,7 +4,8 @@ from flask import Blueprint, render_template, request, redirect, url_for, flash,
 from app.routes.auth import login_required
 from app.models import storage_gsheets as storage  # ✅ Google Sheets
 
-recettes_bp = Blueprint('recettes', __name__, template_folder='templates/recettes')
+recettes_bp = Blueprint('recettes', __name__, url_prefix='/recettes', template_folder='templates/recettes')
+
 
 # ==========================
 # Helpers
@@ -19,14 +20,17 @@ def paginate(items, page, per_page=15):
     return items[start:end], page, total_pages
 
 
-def validate_montant(montant_raw):
+def valider_montant(montant_str):
+    """
+    Convertit le montant en float et lève ValueError si invalide.
+    """
     try:
-        montant = float(montant_raw)
+        montant = float(montant_str.replace(',', '.'))  # permet 10,50 ou 10.50
         if montant <= 0:
             raise ValueError("Le montant doit être supérieur à zéro.")
         return montant
     except Exception:
-        raise ValueError("Le montant est invalide.")
+        raise ValueError(f"Montant invalide : {montant_str}")
 
 
 # ==========================
@@ -95,8 +99,9 @@ def ajouter_recette():
             elif categories and categorie not in categories:
                 erreurs.append(f"La catégorie '{categorie}' n'est pas valide.")
 
+        # Validation du montant
         try:
-            montant = validate_montant(montant_raw)
+            montant = valider_montant(montant_raw)
         except ValueError as ve:
             erreurs.append(str(ve))
 
@@ -118,13 +123,18 @@ def ajouter_recette():
         date = datetime.now().strftime("%Y-%m-%d")
         utilisateur = session.get("username", "inconnu")
 
-        try:
-            description_finale = categorie if type_recette == "standard" else (description or "Recette manuelle")
-            details = description_finale + (f" | Commentaire : {commentaire}" if commentaire else "")
+        description_finale = categorie if type_recette == "standard" else (description or "Recette manuelle")
+        details = description_finale + (f" | Commentaire : {commentaire}" if commentaire else "")
 
+        try:
             storage.enregistrer_autre_recette(
-                nom_classe, etudiant, type_recette, montant,
-                details, date, utilisateur
+                nom_classe=nom_classe,
+                etudiant=etudiant,
+                type_recette=type_recette,
+                montant=montant,
+                description=details,
+                date=date,
+                utilisateur=utilisateur
             )
             flash("Recette ajoutée avec succès.", "success")
             return redirect(url_for('recettes.index_recettes'))

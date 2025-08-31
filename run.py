@@ -14,7 +14,7 @@ if __name__ == "__main__":
     app = create_app()
 
     # Lecture des variables d'environnement
-    debug_mode = os.getenv("FLASK_DEBUG", "False").lower() == "true"
+    debug_mode = os.getenv("FLASK_DEBUG", "True").lower() == "true"
     port = int(os.getenv("PORT", 5008))
 
     print(f"Démarrage de l'application sur http://127.0.0.1:{port} (debug={debug_mode})")

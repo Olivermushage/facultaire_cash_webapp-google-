@@ -3,6 +3,8 @@ from flask import Blueprint, render_template, request, redirect, url_for, flash
 from app.routes.auth import login_required
 from app.models import storage_gsheets as storage
 from app.utils.pagination import paginate  # Assurez-vous que paginate est défini ici
+from flask import session
+
 
 # --- Blueprint ---
 depenses_bp = Blueprint("depenses", __name__, template_folder="../templates")
@@ -23,8 +25,11 @@ def liste_depenses_examen(nom_classe):
         df_cours = lire_cours()
 
         # Sécurité colonnes manquantes
-        if "NomClasse" not in df_cours.columns or "NomCours" not in df_cours.columns:
-            df_cours["NomClasse"] = df_cours["NomCours"] = None
+        if "NomClasse" not in df_cours.columns:
+            df_cours["NomClasse"] = None
+        if "NomCours" not in df_cours.columns:
+            df_cours["NomCours"] = None
+
         if "NomClasse" not in df_depenses.columns or "NomCours" not in df_depenses.columns:
             df_depenses["NomClasse"] = df_depenses["NomCours"] = None
 
@@ -76,18 +81,138 @@ def liste_depenses_examen(nom_classe):
         return redirect(url_for("depenses.depenses_index"))
 
 # --- Ajout de dépense travail (existante dans votre fichier) ---
-@depenses_bp.route("/<nom_classe>/ajouter_depense_travail", methods=["GET", "POST"])
+@depenses_bp.route("/ajouter_depense_travail", methods=["GET", "POST"])
 @login_required
-def ajouter_depense_travail(nom_classe):
-    # ... Garder tout le code existant pour les dépenses de travail ici ...
-    pass  # remplacer par le code complet que vous avez fourni
+def ajouter_depense_travail():
+    try:
+        df_classes = storage.lire_classes()
+        classes = sorted(df_classes["NomClasse"].dropna().unique().tolist()) if not df_classes.empty else []
+        recherche = request.args.get("recherche", "").strip().lower()
+        categories_travaux = ["Travail pratique", "Projet", "Autre"]  # exemple
 
-# --- Routes supplémentaires si nécessaire ---
-@depenses_bp.route('/')
+        if request.method == "POST":
+            nom_classe = request.form.get("nom_classe", "").strip()
+            etudiant = request.form.get("etudiant", "").strip()
+            categorie_travail = request.form.get("categorie_travail", "").strip()
+            type_depense = request.form.get("type_depense", "").strip()
+            commentaire = request.form.get("commentaire", "").strip()
+            date_depense = request.form.get("date_depense", "").strip()
+
+            erreurs = []
+            if nom_classe not in classes:
+                erreurs.append("Classe invalide ou non sélectionnée.")
+            etudiants_possibles = df_classes[df_classes["NomClasse"]==nom_classe]["Etudiant"].tolist() if nom_classe else []
+            if etudiant not in etudiants_possibles:
+                erreurs.append("Étudiant invalide pour la classe sélectionnée.")
+            if categorie_travail not in categories_travaux:
+                erreurs.append("Catégorie invalide.")
+            if not type_depense:
+                erreurs.append("Type de dépense obligatoire.")
+            if not date_depense:
+                erreurs.append("Date de dépense obligatoire.")
+
+            if erreurs:
+                for err in erreurs:
+                    flash(err, "error")
+                return render_template(
+                    "ajouter_depense_travail.html",
+                    classes=classes,
+                    etudiants=etudiants_possibles,
+                    categories=categories_travaux,
+                    nom_classe_valeur=nom_classe,
+                    etudiant_valeur=etudiant,
+                    categorie_valeur=categorie_travail,
+                    type_depense_valeur=type_depense,
+                    commentaire_valeur=commentaire,
+                    date_depense_valeur=date_depense,
+                    recherche=recherche
+                )
+
+            data = {
+                "NomClasse": nom_classe,
+                "Etudiant": etudiant,
+                "CategorieTravail": categorie_travail,
+                "TypeDepense": type_depense,
+                "Commentaire": commentaire,
+                "DateDepense": date_depense
+            }
+
+            try:
+                storage.enregistrer_depense_travaux(data)
+                flash("Dépense travail ajoutée avec succès !", "success")
+                return redirect(url_for("depenses.depenses_index"))
+            except Exception:
+                logging.exception("Erreur lors de l'enregistrement d'une dépense travail")
+                flash("Erreur lors de l'enregistrement de la dépense.", "error")
+                return render_template(
+                    "ajouter_depense_travail.html",
+                    classes=classes,
+                    etudiants=etudiants_possibles,
+                    categories=categories_travaux,
+                    nom_classe_valeur=nom_classe,
+                    etudiant_valeur=etudiant,
+                    categorie_valeur=categorie_travail,
+                    type_depense_valeur=type_depense,
+                    commentaire_valeur=commentaire,
+                    date_depense_valeur=date_depense,
+                    recherche=recherche
+                )
+
+        return render_template(
+            "ajouter_depense_travail.html",
+            classes=classes,
+            etudiants=[],
+            categories=categories_travaux,
+            recherche=recherche
+        )
+
+    except Exception:
+        logging.exception("Erreur sur la page d'ajout de dépense travail")
+        flash("Impossible d'afficher la page des dépenses travail.", "error")
+        return redirect(url_for("depenses.depenses_index"))
+
+
+
+@depenses_bp.route("/depenses")
 @login_required
 def depenses_index():
-    """Page d'accueil des dépenses"""
-    return render_template("depenses_index.html")
+    """Page principale des dépenses avec pagination."""
+    try:
+        # Récupérer toutes les dépenses
+        depenses = storage.lire_depenses()
+        
+        # Pagination
+        page = request.args.get("page", 1, type=int)
+        per_page = 20  # nombre de lignes par page
+        total = len(depenses)
+        start = (page - 1) * per_page
+        end = start + per_page
+        depenses_paginees = depenses.iloc[start:end]  # DataFrame slice
+
+        # Calcul du nombre total de pages
+        total_pages = (total + per_page - 1) // per_page  # arrondi supérieur
+
+        return render_template(
+            "depenses_index.html",
+            depenses=depenses_paginees.to_dict(orient="records"),  # pour Jinja2
+            page=page,
+            per_page=per_page,
+            total=total,
+            total_pages=total_pages
+        )
+    except Exception as e:
+        logging.exception("Erreur lors de l'affichage de la page des dépenses")
+        return render_template(
+            "depenses_index.html",
+            depenses=[],
+            page=1,
+            per_page=20,
+            total=0,
+            total_pages=1,
+            error="Impossible de charger les dépenses."
+        )
+
+
 
 @depenses_bp.route('/choisir_classe_examen')
 @login_required
@@ -134,6 +259,85 @@ def liste_depenses_autres():
         total_pages=(total + per_page - 1) // per_page  # calcul du nombre total de pages
     )
 
+@depenses_bp.route("/ajouter_depense_examen", methods=["GET", "POST"])
+@login_required
+def ajouter_depense_examen():
+    try:
+        df_classes = storage.lire_classes()
+        classes = sorted(df_classes["NomClasse"].dropna().unique().tolist()) if not df_classes.empty else []
+        recherche = request.args.get("recherche", "").strip().lower()
+        categories_examen = ["Matériel", "Frais", "Autre"]
+
+        if request.method == "POST":
+            nom_classe = request.form.get("nom_classe", "").strip()
+            categorie_examen = request.form.get("categorie_examen", "").strip()
+            type_depense = request.form.get("type_depense", "").strip()
+            commentaire = request.form.get("commentaire", "").strip()
+            date_depense = request.form.get("date_depense", "").strip()
+
+            erreurs = []
+            if nom_classe not in classes:
+                erreurs.append("Classe invalide ou non sélectionnée.")
+            if categorie_examen not in categories_examen:
+                erreurs.append("Catégorie invalide.")
+            if not type_depense:
+                erreurs.append("Type de dépense obligatoire.")
+            if not date_depense:
+                erreurs.append("Date de dépense obligatoire.")
+
+            if erreurs:
+                for err in erreurs:
+                    flash(err, "error")
+                return render_template(
+                    "ajouter_depense_examen.html",
+                    classes=classes,
+                    categories=categories_examen,
+                    nom_classe_valeur=nom_classe,
+                    categorie_valeur=categorie_examen,
+                    type_depense_valeur=type_depense,
+                    commentaire_valeur=commentaire,
+                    date_depense_valeur=date_depense,
+                    recherche=recherche
+                )
+
+            data = {
+                "NomClasse": nom_classe,
+                "CategorieDepense": categorie_examen,
+                "TypeDepense": type_depense,
+                "Commentaire": commentaire,
+                "DateDepense": date_depense
+            }
+
+            try:
+                storage.enregistrer_depense_examen(data)
+                flash("Dépense examen ajoutée avec succès !", "success")
+                return redirect(url_for("depenses.depenses_index"))
+            except Exception:
+                logging.exception("Erreur lors de l'enregistrement d'une dépense examen")
+                flash("Erreur lors de l'enregistrement de la dépense.", "error")
+                return render_template(
+                    "ajouter_depense_examen.html",
+                    classes=classes,
+                    categories=categories_examen,
+                    nom_classe_valeur=nom_classe,
+                    categorie_valeur=categorie_examen,
+                    type_depense_valeur=type_depense,
+                    commentaire_valeur=commentaire,
+                    date_depense_valeur=date_depense,
+                    recherche=recherche
+                )
+
+        return render_template(
+            "ajouter_depense_examen.html",
+            classes=classes,
+            categories=categories_examen,
+            recherche=recherche
+        )
+
+    except Exception:
+        logging.exception("Erreur sur la page d'ajout de dépense examen")
+        flash("Impossible d'afficher la page des dépenses examen.", "error")
+        return redirect(url_for("depenses.depenses_index"))
 
 
 @depenses_bp.route("/ajouter_depense_autres", methods=["GET", "POST"])
@@ -141,39 +345,50 @@ def liste_depenses_autres():
 def ajouter_depense_autres():
     """
     Ajouter une dépense autre que celles liées aux travaux ou examens.
+    Gestion du type : 'manuelle' ou 'standard' avec sous-type possible.
     """
     try:
         # Lecture des classes disponibles
         df_classes = storage.lire_classes()
-        if df_classes is None or df_classes.empty:
-            classes = []
-        else:
-            classes = df_classes["NomClasse"].dropna().drop_duplicates().tolist()
-            classes.sort()
+        classes = df_classes["NomClasse"].dropna().drop_duplicates().tolist() if not df_classes.empty else []
 
-        # Lecture des catégories de dépenses autres (à définir)
-        categories_autres = ["Fournitures", "Déplacements", "Autres"]  # exemple
-        recherche = request.args.get("recherche", "").strip().lower()
+        # Catégories standard pour ce formulaire
+        categories_autres = ["Fournitures", "Déplacements", "Autres"]
 
         if request.method == "POST":
+            type_depense = request.form.get("type_depense", "").strip()
+            sous_type = request.form.get("sous_type", "").strip()
             nom_classe = request.form.get("nom_classe", "").strip()
-            categorie = request.form.get("categorie", "").strip()
             description = request.form.get("description", "").strip()
+            commentaire = request.form.get("commentaire", "").strip()
             montant_raw = request.form.get("montant", "").strip()
             date_depense = request.form.get("date_depense", "").strip()
 
             erreurs = []
 
-            if nom_classe not in classes:
-                erreurs.append("Classe invalide ou non sélectionnée.")
-            if categorie not in categories_autres:
-                erreurs.append("Catégorie invalide.")
-            if not description:
-                erreurs.append("Description obligatoire.")
+            # Validation type
+            if type_depense not in ["manuelle", "standard"]:
+                erreurs.append("Le type de dépense n'est pas valide.")
+
+            # Validation sous-type et classe
+            # Validation sous-type et classe
+            if type_depense == "standard":
+            # Si c’est une dépense liée à Travaux ou Examens, la classe est obligatoire
+                if sous_type in ["Travaux", "Examen"] and nom_classe not in classes:
+                    erreurs.append("Classe invalide ou non sélectionnée.")
+
+
+            # Validation montant
             try:
                 montant = float(montant_raw)
+                if montant <= 0:
+                    erreurs.append("Le montant doit être supérieur à 0.")
             except ValueError:
                 erreurs.append("Montant invalide.")
+
+            if not description:
+                erreurs.append("Description obligatoire.")
+
             if not date_depense:
                 erreurs.append("Date de dépense obligatoire.")
 
@@ -184,21 +399,25 @@ def ajouter_depense_autres():
                     "ajouter_depense_autres.html",
                     classes=classes,
                     categories=categories_autres,
+                    type_depense_valeur=type_depense,
+                    sous_type_valeur=sous_type,
                     nom_classe_valeur=nom_classe,
-                    categorie_valeur=categorie,
                     description_valeur=description,
+                    commentaire_valeur=commentaire,
                     montant_valeur=montant_raw,
-                    date_depense_valeur=date_depense,
-                    recherche=recherche
+                    date_depense_valeur=date_depense
                 )
 
-            # Enregistrement
+            # Construction de l'enregistrement
             data = {
-                "NomClasse": nom_classe,
-                "CategorieDepense": categorie,
                 "Description": description,
+                "Commentaire": commentaire,
                 "Montant": montant,
-                "DateDepense": date_depense
+                "DateDepense": date_depense,
+                "TypeDepense": type_depense,
+                "NomClasse": nom_classe if nom_classe else "",
+                "CategorieDepense": sous_type if type_depense == "standard" else "Autre",
+                "Utilisateur": session.get("username", "inconnu")
             }
 
             try:
@@ -212,20 +431,20 @@ def ajouter_depense_autres():
                     "ajouter_depense_autres.html",
                     classes=classes,
                     categories=categories_autres,
+                    type_depense_valeur=type_depense,
+                    sous_type_valeur=sous_type,
                     nom_classe_valeur=nom_classe,
-                    categorie_valeur=categorie,
                     description_valeur=description,
+                    commentaire_valeur=commentaire,
                     montant_valeur=montant_raw,
-                    date_depense_valeur=date_depense,
-                    recherche=recherche
+                    date_depense_valeur=date_depense
                 )
 
         # GET : formulaire vide
         return render_template(
             "ajouter_depense_autres.html",
             classes=classes,
-            categories=categories_autres,
-            recherche=recherche
+            categories=categories_autres
         )
 
     except Exception:

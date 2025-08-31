@@ -32,13 +32,12 @@ def gerer_categories():
                       .str.decode('utf-8')
         )
         # Renommer 'Categorie' sans accent si la colonne originale s'appelle 'Categorie' ou 'Catégorie'
-        if 'Categorie' not in df.columns:
-            if 'Categorie' not in df.columns and 'Categorie' not in df.columns:
-                # Recherche de la colonne avec accent qui deviendra Categorie
-                for col in df.columns:
-                    if col.lower() == 'categorie':
-                        df.rename(columns={col: 'Categorie'}, inplace=True)
-                        break
+        if "Categorie" not in df.columns:
+            # Recherche de la colonne avec accent qui deviendra Categorie
+            for col in df.columns:
+                if col.lower() == "categorie":
+                    df.rename(columns={col: "Categorie"}, inplace=True)
+                    break
         return df
 
     df_p = normalize_columns(df_p)

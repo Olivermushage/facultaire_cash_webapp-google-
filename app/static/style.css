@@ -473,3 +473,12 @@ footer {
     font-size: 1.1em;
   }
 }
+
+.btn-link {
+    text-decoration: none;
+    color: var(--primary-color);
+    font-weight: bold;
+}
+.btn-link:hover, .btn-link:focus {
+    text-decoration: underline;
+}
