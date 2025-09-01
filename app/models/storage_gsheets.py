@@ -110,6 +110,86 @@ def get_sheet(sheet_name, columns=None):
             ws.insert_row(columns, index=1)
     return ws
 
+def get_classes():
+    """
+    Récupère la liste des classes depuis la feuille Google Sheets 'Classes'.
+    Retourne une liste unique de noms de classes.
+    """
+    try:
+        sheet = get_sheet("Classes")  # On récupère l’onglet "Classes"
+        records = sheet.get_all_records()  # Retourne les lignes sous forme de dict
+        classes = [row.get("NomClasse") for row in records if row.get("NomClasse")]
+        return sorted(set(classes))  # Supprimer doublons + trier
+    except Exception as e:
+        print(f"[Erreur get_classes] {e}")
+        return []
+
+def ajouter_depense(description, montant, date_depense=None, categorie=None, nom_classe=None,
+                    type_depense="Autre", commentaire="", nom_cours="", utilisateur="inconnu"):
+    """
+    Ajoute une dépense à la feuille Depenses.
+    Assure que toutes les colonnes obligatoires soient remplies :
+    - DateDepense : prend la date actuelle si None
+    - CategorieDepense : peut rester vide si non fournie
+    - Utilisateur : 'inconnu' par défaut
+    """
+    ws = get_sheet("Depenses")
+
+    # Si aucune date fournie, utiliser la date du jour
+    if not date_depense:
+        date_depense = datetime.datetime.now().strftime("%Y-%m-%d")
+
+    # Vérification du montant
+    try:
+        montant_val = float(montant)
+    except (ValueError, TypeError):
+        montant_val = 0.0
+
+    ligne = [
+        "",                  # ID auto-géré ailleurs si nécessaire
+        nom_cours or "",
+        categorie or "",
+        description or "",
+        montant_val,
+        nom_classe or "",
+        type_depense,
+        commentaire or "",
+        date_depense,
+        utilisateur
+    ]
+
+    ws.append_row(ligne, value_input_option="USER_ENTERED")
+
+
+
+def get_cours_par_classe(nom_classe):
+    """
+    Récupère la liste des cours pour une classe donnée depuis la feuille Google Sheets 'Cours'.
+    
+    Args:
+        nom_classe (str): Nom de la classe.
+
+    Returns:
+        list: Liste de noms de cours associés à la classe (triée et sans doublons).
+    """
+    if not nom_classe:
+        return []
+
+    try:
+        sheet = get_sheet("Cours")  # Onglet "Cours"
+        records = sheet.get_all_records()  # Retourne les lignes sous forme de dict
+        cours = [
+            row.get("NomCours") 
+            for row in records 
+            if row.get("NomClasse") and row.get("NomClasse").strip() == nom_classe.strip()
+               and row.get("NomCours")
+        ]
+        return sorted(set(cours))  # Supprime doublons et trie
+    except Exception as e:
+        print(f"[Erreur get_cours_par_classe] {e}")
+        return []
+
+
 def read_sheet(sheet_name):
     try:
         ws = sh.worksheet(sheet_name)

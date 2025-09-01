@@ -5,6 +5,7 @@
 {% block content %}
 <h2>Ajouter une autre dépense</h2>
 
+{# Messages flash #}
 {% with messages = get_flashed_messages(with_categories=true) %}
   {% if messages %}
     <div class="flash-container">
@@ -24,103 +25,167 @@
 
 <form method="post" action="{{ url_for('depenses.ajouter_depense_autres') }}" class="form-default">
 
-    <label for="type_depense" class="label-default">Type de dépense <span class="text-danger">*</span></label>
-    <select id="type_depense" name="type_depense" required class="input-default" onchange="toggleFields()">
-        <option value="manuelle" {% if request.form.get('type_depense') == 'manuelle' %}selected{% endif %}>Manuelle</option>
-        <option value="standard" {% if request.form.get('type_depense') == 'standard' %}selected{% endif %}>Standard</option>
+    <label for="type_depense" class="label-default">
+        Type de dépense <span class="text-danger">*</span>
+    </label>
+    <select id="type_depense" name="type_depense" required class="input-default">
+        <option value="" disabled selected>-- Sélectionnez un type --</option>
+        <option value="manuelle">Manuelle</option>
+        <option value="standard">Standard</option>
     </select>
 
-    <div id="standard_fields" style="display:none; margin-top:10px;">
-        <label for="sous_type_standard" class="label-default">Sous-type <span class="text-danger">*</span></label>
-        <select id="sous_type_standard" name="sous_type_standard" class="input-default" onchange="toggleStandardSubFields()">
-            <option value="autre" {% if request.form.get('sous_type_standard') == 'autre' %}selected{% endif %}>Autre</option>
-            <option value="travaux" {% if request.form.get('sous_type_standard') == 'travaux' %}selected{% endif %}>Travaux</option>
-            <option value="examen" {% if request.form.get('sous_type_standard') == 'examen' %}selected{% endif %}>Examen</option>
+    <div id="sous_type_container" style="display: none; margin-top: 1em;">
+        <label for="sous_type" class="label-default">
+            Sous-type (si Standard) <span class="text-danger">*</span>
+        </label>
+        <select id="sous_type" name="sous_type" class="input-default">
+            <option value="" disabled selected>-- Sélectionnez un sous-type --</option>
+            <option value="examen">Examen</option>
+            <option value="travail">Travail</option>
+            <option value="autre">Autre</option>
         </select>
-
-        <div id="autre_fields" style="display:none;">
-            <label for="categorie" class="label-default">Catégorie</label>
-            <select id="categorie" name="categorie" class="input-default">
-                <option value="">-- Sélectionner une catégorie --</option>
-                {% for cat in categories %}<option value="{{ cat }}" {% if request.form.get('categorie') == cat %}selected{% endif %}>{{ cat }}</option>{% endfor %}
-            </select>
-        </div>
-
-        <div id="travaux_fields" style="display:none;">
-            <label for="nom_classe_travaux" class="label-default">Classe</label>
-            <select id="nom_classe_travaux" name="nom_classe_travaux" class="input-default" onchange="filterEtudiants()">
-                <option value="">-- Sélectionner une classe --</option>
-                {% for c in classes %}<option value="{{ c }}" {% if request.form.get('nom_classe_travaux') == c %}selected{% endif %}>{{ c }}</option>{% endfor %}
-            </select>
-
-            <label for="etudiant_travaux" class="label-default">Étudiant</label>
-            <select id="etudiant_travaux" name="etudiant_travaux" class="input-default">
-                <option value="">-- Sélectionner un étudiant --</option>
-                {% for e in etudiants %}<option value="{{ e }}" {% if request.form.get('etudiant_travaux') == e %}selected{% endif %}>{{ e }}</option>{% endfor %}
-            </select>
-        </div>
-
-        <div id="examen_fields" style="display:none;">
-            <label for="nom_classe_examen" class="label-default">Classe</label>
-            <select id="nom_classe_examen" name="nom_classe_examen" class="input-default" onchange="filterCours()">
-                <option value="">-- Sélectionner une classe --</option>
-                {% for c in classes %}<option value="{{ c }}" {% if request.form.get('nom_classe_examen') == c %}selected{% endif %}>{{ c }}</option>{% endfor %}
-            </select>
-
-            <label for="nom_cours_examen" class="label-default">Cours</label>
-            <select id="nom_cours_examen" name="nom_cours_examen" class="input-default">
-                <option value="">-- Sélectionner un cours --</option>
-                {% for cours in cours %}<option value="{{ cours }}" {% if request.form.get('nom_cours_examen') == cours %}selected{% endif %}>{{ cours }}</option>{% endfor %}
-            </select>
-        </div>
-
-        <label for="commentaire_standard" class="label-default">Commentaire</label>
-        <input type="text" id="commentaire_standard" name="commentaire_standard" placeholder="Optionnel" value="{{ request.form.get('commentaire_standard', '') }}" class="input-default">
     </div>
 
-    <label for="description" class="label-default">Description</label>
-    <input type="text" id="description" name="description" placeholder="Optionnel" value="{{ request.form.get('description', '') }}" class="input-default">
+    <div id="classe_container" style="display: none; margin-top: 1em;">
+        <label for="classe" class="label-default">Classe <span class="text-danger">*</span></label>
+        <select id="classe" name="classe" class="input-default">
+            <option value="" disabled selected>-- Sélectionnez une classe --</option>
+            {% for cl in classes %}
+                <option value="{{ cl }}">{{ cl }}</option>
+            {% endfor %}
+        </select>
+    </div>
 
-    <label for="montant" class="label-default">Montant (USD) <span class="text-danger">*</span></label>
-    <input type="number" step="0.01" min="0.01" id="montant" name="montant" required value="{{ request.form.get('montant', '') }}" class="input-default">
+    <div id="cours_container" style="display: none; margin-top: 1em;">
+        <label for="cours" class="label-default">Cours <span class="text-danger">*</span></label>
+        <select id="cours" name="cours" class="input-default">
+            <option value="" disabled selected>-- Sélectionnez un cours --</option>
+        </select>
+    </div>
 
-    <label for="date_depense" class="label-default">Date <span class="text-danger">*</span></label>
-    <input type="date" id="date_depense" name="date_depense" required value="{{ request.form.get('date_depense', '') }}" class="input-default">
+    <label for="description" class="label-default" style="margin-top: 1em;">
+        Description <span class="text-danger">*</span>
+    </label>
+    <input type="text" id="description" name="description" required
+           placeholder="Ex : Fourniture, transport..."
+           value="{{ request.form.get('description', '') }}" class="input-default">
 
-    <div class="form-actions">
+    <label for="commentaire" class="label-default" style="margin-top: 1em;">
+        Commentaire (optionnel)
+    </label>
+    <input type="text" id="commentaire" name="commentaire"
+           placeholder="Ex : précisions supplémentaires"
+           value="{{ request.form.get('commentaire', '') }}" class="input-default">
+
+    <label for="montant" class="label-default" style="margin-top: 1em;">
+        Montant (USD) <span class="text-danger">*</span>
+    </label>
+    <input type="number" step="0.01" min="0.01" id="montant" name="montant" required
+           placeholder="Ex : 150.00" value="{{ request.form.get('montant', '') }}" class="input-default">
+
+    <label for="date_depense" class="label-default" style="margin-top: 1em;">
+        Date de la dépense <span class="text-danger">*</span>
+    </label>
+    <input type="date" id="date_depense" name="date_depense" required
+           value="{{ request.form.get('date_depense', '') }}" class="input-default">
+
+    <div class="form-actions" style="margin-top: 1.5em;">
         <a href="{{ url_for('depenses.depenses_index') }}" class="btn-link">← Retour aux dépenses</a>
         <button type="submit" class="btn-success">Enregistrer</button>
     </div>
 
-    <div class="form-note">
+    <div class="form-note" style="margin-top: 1em;">
         <span class="text-danger">*</span> Champs obligatoires
     </div>
 </form>
 
 <script>
-function toggleFields() {
-    var type = document.getElementById("type_depense").value;
-    document.getElementById("standard_fields").style.display = (type === "standard") ? "block" : "none";
-    toggleStandardSubFields();
-}
+(function () {
+    const typeSelect = document.getElementById("type_depense");
+    const sousTypeContainer = document.getElementById("sous_type_container");
+    const sousTypeSelect = document.getElementById("sous_type");
+    const classeContainer = document.getElementById("classe_container");
+    const classeSelect = document.getElementById("classe");
+    const coursContainer = document.getElementById("cours_container");
+    const coursSelect = document.getElementById("cours");
+    const apiUrl = "{{ url_for('depenses.api_cours_by_classe') }}";
 
-function toggleStandardSubFields() {
-    var sousType = document.getElementById("sous_type_standard").value;
-    document.getElementById("autre_fields").style.display = (sousType === "autre") ? "block" : "none";
-    document.getElementById("travaux_fields").style.display = (sousType === "travaux") ? "block" : "none";
-    document.getElementById("examen_fields").style.display = (sousType === "examen") ? "block" : "none";
-}
+    function resetCours(placeholder) {
+        coursSelect.innerHTML = "";
+        const opt = document.createElement("option");
+        opt.value = "";
+        opt.disabled = true;
+        opt.selected = true;
+        opt.textContent = placeholder;
+        coursSelect.appendChild(opt);
+    }
 
-document.addEventListener("DOMContentLoaded", toggleFields);
+    typeSelect.addEventListener("change", function () {
+        if (this.value === "standard") {
+            sousTypeContainer.style.display = "block";
+        } else {
+            sousTypeContainer.style.display = "none";
+            classeContainer.style.display = "none";
+            coursContainer.style.display = "none";
+        }
+    });
 
-// Filtrer les étudiants selon la classe choisie (travaux)
-function filterEtudiants() {
-    // implémenter JS côté front pour filtrer <option> des étudiants selon la classe
-}
+    sousTypeSelect.addEventListener("change", function () {
+        if (this.value === "examen") {
+            classeContainer.style.display = "block";
+            coursContainer.style.display = "block";
+        } else if (this.value === "travail") {
+            classeContainer.style.display = "block";
+            coursContainer.style.display = "none";
+        } else {
+            classeContainer.style.display = "none";
+            coursContainer.style.display = "none";
+        }
+    });
 
-// Filtrer les cours selon la classe choisie (examens)
-function filterCours() {
-    // implémenter JS côté front pour filtrer <option> des cours selon la classe
-}
+    classeSelect.addEventListener("change", function () {
+        if (sousTypeSelect.value === "examen") {
+            const classe = this.value.trim();
+            if (!classe) {
+                resetCours("-- Sélectionnez d'abord une classe --");
+                return;
+            }
+            resetCours("Chargement...");
+            fetch(`${apiUrl}?classe=${encodeURIComponent(classe)}`, {
+                headers: { "X-Requested-With": "XMLHttpRequest" }
+            })
+            .then(r => r.json())
+            .then(data => {
+                coursSelect.innerHTML = "";
+                if (data.status === "success") {
+                    const liste = Array.isArray(data.cours) ? data.cours : [];
+                    if (liste.length === 0) {
+                        resetCours("Aucun cours trouvé");
+                        return;
+                    }
+                    const ph = document.createElement("option");
+                    ph.value = "";
+                    ph.disabled = true;
+                    ph.selected = true;
+                    ph.textContent = "-- Sélectionnez un cours --";
+                    coursSelect.appendChild(ph);
+
+                    liste.forEach(c => {
+                        const opt = document.createElement("option");
+                        opt.value = c;
+                        opt.textContent = c;
+                        coursSelect.appendChild(opt);
+                    });
+                } else {
+                    resetCours("Erreur de chargement");
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                resetCours("Erreur serveur");
+            });
+        }
+    });
+})();
 </script>
 {% endblock %}
