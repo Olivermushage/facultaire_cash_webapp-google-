@@ -19,20 +19,27 @@ def create_app():
     from .models import storage_gsheets as storage
     storage.init_all_files()
 
-    # Import des blueprints
+    # Import des blueprints existants
     from .routes.auth import auth_bp
     from .routes.main import main_bp
     from .routes.classes import classes_bp
     from .routes.depenses import depenses_bp
     from .routes.recettes import recettes_bp
     from .routes.categories import categories_bp
+    from .routes.inscription import inscription_bp  # <- Import du nouveau blueprint
+    from .routes.travaux import travaux_bp  # <- Import du blueprint travaux
 
+
+    # Enregistrement des blueprints
     app.register_blueprint(auth_bp)
     app.register_blueprint(main_bp)
     app.register_blueprint(classes_bp, url_prefix="/classes")
     app.register_blueprint(depenses_bp, url_prefix="/depenses")
     app.register_blueprint(recettes_bp, url_prefix="/recettes")
     app.register_blueprint(categories_bp, url_prefix="/categories")
+    app.register_blueprint(inscription_bp, url_prefix="/inscription")  # <- Enregistrement
+    app.register_blueprint(travaux_bp, url_prefix="/travaux")  # <- Enregistrement blueprint travaux
+
 
     # Création automatique de l'administrateur par défaut
     from .models.user import create_admin_default

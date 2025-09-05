@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+
+{% block title %}Sélectionnez une classe{% endblock %}
+
+{% block content %}
+<h2>Choisissez une classe</h2>
+
+<!-- Affichage des messages flash -->
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    <ul class="flash-messages">
+      {% for category, message in messages %}
+        <li class="flash-{{ category }}">{{ message }}</li>
+      {% endfor %}
+    </ul>
+  {% endif %}
+{% endwith %}
+
+<form method="POST" class="form-default" style="max-width:400px;">
+  <div class="form-group">
+    <label for="classe">Classe :</label>
+    <select name="classe" id="classe" required class="input-default">
+      <option value="" disabled selected>-- Sélectionnez une classe --</option>
+      {% for classe in classes %}
+      <option value="{{ classe }}" {% if request.form.get('classe') == classe %}selected{% endif %}>{{ classe }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="form-actions">
+    <button type="submit" class="btn-primary">Suivant</button>
+  </div>
+</form>
+{% endblock %}

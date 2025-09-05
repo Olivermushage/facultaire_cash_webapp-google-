@@ -2,6 +2,13 @@ import pandas as pd
 from flask import Blueprint, render_template, request, url_for
 from app.routes.auth import login_required  # juste le décorateur
 from app.models import storage_gsheets as storage  # ✅ Google Sheets uniquement
+from app.models.storage_gsheets import (
+    lire_paiements_inscriptions,
+    total_paiements_travaux,  # Importez ceci
+    # autres fonctions...
+)
+
+
 
 main_bp = Blueprint("main", __name__, template_folder="../templates")
 
@@ -53,30 +60,45 @@ def inject_menu():
     }
 
 
-
 @main_bp.route("/")
 @login_required
 def index():
-    # --- Récupérer toutes les données des feuilles ---
+    # Lire les données de Google Sheets via vos fonctions
     df_classes = storage.lire_classes()
 
-    # Toutes les recettes
-    recettes_list = [storage.lire_recettes(), storage.lire_paiements(), storage.lire_autres_recettes()]
-    df_recettes_complet = concat_or_empty(recettes_list, [
-        "ID", "NomClasse", "Etudiant", "Type", "Montant", "Description", "Date", "Utilisateur"
-    ])
+    df_recettes = storage.lire_recettes()
+    df_autres_recettes = storage.lire_autres_recettes()
+    df_paiements_inscriptions = lire_paiements_inscriptions()
 
-    # Toutes les dépenses
     df_depenses_list = [storage.lire_depenses()]
     df_depenses = concat_or_empty(df_depenses_list, [
         "ID", "NomClasse", "NomCours", "DateExamen", "CategorieDepense", "Description",
         "Montant", "TypeDepense", "Commentaire", "DateDepense"
     ])
 
-    # --- Totaux ---
-    total_recettes = safe_sum(df_recettes_complet, "Montant")
+    # Combine recettes hors paiements inscriptions
+    df_recettes_complet = concat_or_empty([df_recettes, df_autres_recettes], [
+        "ID", "NomClasse", "Etudiant", "Type", "Montant", "Description", "Date", "Utilisateur"
+    ])
+
+    # Totaux
+    total_recettes_normales = safe_sum(df_recettes, "Montant")
+    total_autres_recettes = safe_sum(df_autres_recettes, "Montant")
+    total_paiements_inscriptions = safe_sum(df_paiements_inscriptions, "Montant")
+
+    # Calcul total paiements travaux - attention à ne pas utiliser le même nom que la fonction
+    total_paiements_travaux_valeur = total_paiements_travaux()
+
     total_depenses = safe_sum(df_depenses, "Montant")
-    solde = total_recettes - total_depenses
+
+    # Calcul du solde en ajoutant le total des paiements travaux
+    solde = (
+        total_recettes_normales
+        + total_autres_recettes
+        + total_paiements_inscriptions
+        + total_paiements_travaux_valeur  # <-- Ajout ici
+        - total_depenses
+    )
 
     # Dépenses examens / autres
     if not df_depenses.empty and "NomCours" in df_depenses.columns:
@@ -110,14 +132,21 @@ def index():
                 "paiements_par_categorie": paiements_par_categorie,
             })
 
+    # Passer toutes ces variables au template
     return render_template(
         "index.html",
         solde=round(solde, 2),
-        total_recettes=round(total_recettes, 2),
+        total_recettes_normales=round(total_recettes_normales, 2),
+        total_paiements_inscriptions=round(total_paiements_inscriptions, 2),
+        total_autres_recettes=round(total_autres_recettes, 2),
         total_depenses_examen=round(total_depenses_examen, 2),
         total_depenses_autres=round(total_depenses_autres, 2),
         classes_info=classes_info,
+        total_paiements_travaux=round(total_paiements_travaux_valeur, 2),  # <-- Variable renommée pour éviter conflit
     )
+
+
+
 
 
 @main_bp.route("/historique")
@@ -127,19 +156,35 @@ def historique():
     page = request.args.get("page", 1, type=int)
     per_page = 20
 
-    # Toutes les données
+    # Charger les données des dépenses
     df_depenses_list = [storage.lire_depenses()]
     df_depenses = concat_or_empty(df_depenses_list, [
         "ID", "NomClasse", "NomCours", "DateExamen", "CategorieDepense", "Description",
         "Montant", "TypeDepense", "Commentaire", "DateDepense"
     ])
 
+    # Charger les recettes : recettes, paiements inscriptions, autres recettes
     recettes_list = [storage.lire_recettes(), storage.lire_paiements(), storage.lire_autres_recettes()]
     df_recettes_complet = concat_or_empty(recettes_list, [
         "ID", "NomClasse", "Etudiant", "Type", "Montant", "Description", "Date", "Utilisateur"
     ])
 
-    # Filtre recherche
+    # Lire inscriptions et paiements travaux (à adapter fonctions selon projet)
+    df_inscriptions = storage.lire_inscriptions()
+    df_paiements_travaux = storage.lire_paiements_travaux()
+
+    # Concaténer inscriptions et paiements travaux dans opérations caisse
+    df_operations_supplementaires = concat_or_empty([df_inscriptions, df_paiements_travaux], [
+        "ID", "NomClasse", "Etudiant", "TypeInscription", "TypeTravail", "StatutPaiement", "Montant", "DatePaiement"
+    ])
+
+    # Concaténer toutes les opérations caisse
+    df_operations_caisse = concat_or_empty([df_depenses, df_operations_supplementaires], [
+        "ID", "NomClasse", "Etudiant", "TypeInscription", "TypeTravail", "CategorieDepense",
+        "StatutPaiement", "Montant", "DatePaiement", "Description", "TypeDepense", "DateDepense"
+    ])
+
+    # Fonction filtre recherche
     def filter_df(df, recherche):
         if recherche and not df.empty:
             return df[df.apply(
@@ -150,25 +195,31 @@ def historique():
             )]
         return df
 
-    df_depenses_filtered = filter_df(df_depenses, recherche)
+    df_operations_filtered = filter_df(df_operations_caisse, recherche)
     df_recettes_filtered = filter_df(df_recettes_complet, recherche)
 
-    # Séparation travaux / dépenses classiques
-    df_travaux = df_depenses_filtered[
-        df_depenses_filtered.get("CategorieDepense", "").str.contains("Travail", na=False, case=False)
+    # Séparer travaux / dépenses classiques dans les opérations
+    df_travaux = df_operations_filtered[
+        df_operations_filtered.get("CategorieDepense", "").str.contains("Travail", na=False, case=False)
     ]
-    df_depenses_classiques = df_depenses_filtered[
-        ~df_depenses_filtered.get("CategorieDepense", "").str.contains("Travail", na=False, case=False)
+    df_depenses_classiques = df_operations_filtered[
+        ~df_operations_filtered.get("CategorieDepense", "").str.contains("Travail", na=False, case=False)
     ]
 
-    operations_caisse = df_depenses_filtered.to_dict(orient="records")
+    # Pagination
+    operations_page, page, total_pages = paginate_list(
+        df_operations_filtered.to_dict(orient="records"), page, per_page
+    )
+
+    # Conversion dict pour le template
     depenses_classiques = df_depenses_classiques.to_dict(orient="records")
     depenses_travaux = df_travaux.to_dict(orient="records")
     recettes = df_recettes_filtered.to_dict(orient="records")
+    inscriptions = df_inscriptions.to_dict(orient="records")
+    paiements_travaux = df_paiements_travaux.to_dict(orient="records")
 
-    operations_page, page, total_pages = paginate_list(operations_caisse, page, per_page)
-
-    total_caisse = safe_sum(df_depenses_filtered, "Montant")
+    # Totaux
+    total_caisse = safe_sum(df_operations_filtered, "Montant")
     total_depenses_classiques = safe_sum(df_depenses_classiques, "Montant")
     total_travaux = safe_sum(df_travaux, "Montant")
     total_recettes = safe_sum(df_recettes_filtered, "Montant")
@@ -180,6 +231,8 @@ def historique():
         depenses_classiques=depenses_classiques,
         depenses_travaux=depenses_travaux,
         recettes=recettes,
+        inscriptions=inscriptions,
+        paiements_travaux=paiements_travaux,
         page=page,
         total_pages=total_pages,
         total_caisse=total_caisse,
@@ -189,3 +242,4 @@ def historique():
         solde=solde,
         recherche=recherche,
     )
+

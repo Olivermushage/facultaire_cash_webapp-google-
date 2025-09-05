@@ -10,9 +10,59 @@ import pandas as pd
 # --- Blueprint ---
 depenses_bp = Blueprint("depenses", __name__, template_folder="../templates")
 
-# --- Fonctions utilitaires pour lire les données ---
-def lire_depenses():
-    return storage.lire_depenses()
+# # --- Fonctions utilitaires pour lire les données ---
+@depenses_bp.route("/depenses")
+@login_required
+def depenses_index():
+    """Page principale des dépenses avec pagination."""
+    try:
+        depenses = storage.lire_depenses()  # DataFrame complète
+
+        # Liste des colonnes attendues/affichées
+        colonnes_a_afficher = [
+            "NomCours",
+            "CategorieDepense",
+            "Description",
+            "Montant",
+            "NomClasse",
+            "TypeDepense",
+            "Commentaire",
+            "DateDepense"
+        ]
+
+        # S'assurer que ces colonnes existent, sinon les créer vides
+        for col in colonnes_a_afficher:
+            if col not in depenses.columns:
+                depenses[col] = None
+
+        # Sélectionner uniquement ces colonnes, garder l'ordre
+        depenses = depenses[colonnes_a_afficher]
+
+        # Pagination
+        page = request.args.get("page", 1, type=int)
+        per_page = 20
+        total = len(depenses)
+        start = (page - 1) * per_page
+        end = start + per_page
+        depenses_paginees = depenses.iloc[start:end]
+
+        total_pages = (total + per_page - 1) // per_page  # arrondi supérieur
+
+        return render_template(
+            "depenses_index.html",
+            depenses=depenses_paginees.to_dict(orient="records"),
+            page=page,
+            total_pages=total_pages
+        )
+    except Exception as e:
+        logging.exception("Erreur lors de l'affichage de la page des dépenses")
+        return render_template(
+            "depenses_index.html",
+            depenses=[],
+            page=1,
+            total_pages=1,
+            error="Impossible de charger les dépenses."
+        )
 
 def lire_cours():
     df = read_sheet("Cours")
@@ -46,14 +96,26 @@ def liste_depenses_examen(nom_classe):
         df_depenses = lire_depenses()
         df_cours = lire_cours()
 
-        # Sécurité colonnes manquantes
-        if "NomClasse" not in df_cours.columns:
-            df_cours["NomClasse"] = None
-        if "NomCours" not in df_cours.columns:
-            df_cours["NomCours"] = None
+        # Logs pour diagnostic
+        logging.debug(f"Colonnes depenses : {df_depenses.columns.tolist()}")
+        logging.debug(f"Premières lignes depenses :\n{df_depenses.head(5)}")
+        logging.debug(f"Colonnes cours : {df_cours.columns.tolist()}")
+        logging.debug(f"Premières lignes cours :\n{df_cours.head(5)}")
 
-        if "NomClasse" not in df_depenses.columns or "NomCours" not in df_depenses.columns:
-            df_depenses["NomClasse"] = df_depenses["NomCours"] = None
+        # Assurer présence colonnes essentielles
+        for col in ["NomClasse", "NomCours"]:
+            if col not in df_cours.columns:
+                logging.warning(f"Colonne {col} manquante dans cours, ajout colonne vide.")
+                df_cours[col] = None
+            if col not in df_depenses.columns:
+                logging.warning(f"Colonne {col} manquante dans depenses, ajout colonne vide.")
+                df_depenses[col] = None
+
+        # Nettoyer espaces
+        df_cours["NomClasse"] = df_cours["NomClasse"].astype(str).str.strip()
+        df_cours["NomCours"] = df_cours["NomCours"].astype(str).str.strip()
+        df_depenses["NomClasse"] = df_depenses["NomClasse"].astype(str).str.strip()
+        df_depenses["NomCours"] = df_depenses["NomCours"].astype(str).str.strip()
 
         group_by_cours = request.args.get("group_by_cours", "true").lower() == "true"
         recherche = request.args.get("recherche", "").strip().lower()
@@ -193,46 +255,6 @@ def ajouter_depense_travail():
         flash("Impossible d'afficher la page des dépenses travail.", "error")
         return redirect(url_for("depenses.depenses_index"))
 
-
-
-@depenses_bp.route("/depenses")
-@login_required
-def depenses_index():
-    """Page principale des dépenses avec pagination."""
-    try:
-        # Récupérer toutes les dépenses
-        depenses = storage.lire_depenses()
-        
-        # Pagination
-        page = request.args.get("page", 1, type=int)
-        per_page = 20  # nombre de lignes par page
-        total = len(depenses)
-        start = (page - 1) * per_page
-        end = start + per_page
-        depenses_paginees = depenses.iloc[start:end]  # DataFrame slice
-
-        # Calcul du nombre total de pages
-        total_pages = (total + per_page - 1) // per_page  # arrondi supérieur
-
-        return render_template(
-            "depenses_index.html",
-            depenses=depenses_paginees.to_dict(orient="records"),  # pour Jinja2
-            page=page,
-            per_page=per_page,
-            total=total,
-            total_pages=total_pages
-        )
-    except Exception as e:
-        logging.exception("Erreur lors de l'affichage de la page des dépenses")
-        return render_template(
-            "depenses_index.html",
-            depenses=[],
-            page=1,
-            per_page=20,
-            total=0,
-            total_pages=1,
-            error="Impossible de charger les dépenses."
-        )
 
 
 

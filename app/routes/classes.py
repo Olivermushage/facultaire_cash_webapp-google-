@@ -18,15 +18,20 @@ classes_bp = Blueprint("classes", __name__, template_folder="../templates")
 @classes_bp.route('/choisir_classe_etudiant')
 @login_required
 def choisir_classe_etudiant():
-    classes = storage.liste_classes()
+    classes = storage.lire_classes()
     return render_template('choisir_classe.html', classes=classes, action='ajouter_etudiant')
 
 
 @classes_bp.route('/choisir_classe_paiement')
 @login_required
 def choisir_classe_paiement():
-    classes = storage.liste_classes()
-    return render_template('choisir_classe.html', classes=classes, action='suivi_paiements')
+    df = storage.lire_classes()  # DataFrame complet avec 'NomClasse' et 'Etudiant'
+    
+    # Extraire uniquement les noms de classes et retirer doublons
+    classes_unique = df['NomClasse'].drop_duplicates().sort_values().tolist()
+    
+    # Envoyer au template la liste simple de noms de classes
+    return render_template('choisir_classe.html', classes=classes_unique, action='suivi_paiements')
 
 
 @classes_bp.route("/classes/<nom_classe>/suivi_paiements")

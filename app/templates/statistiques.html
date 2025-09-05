@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block title %}Statistiques de la classe {{ nom_classe }}{% endblock %}
+
+{% block content %}
+<h2>Statistiques des paiements</h2>
+<p>Classe : {{ nom_classe }} | Type : {{ type_inscription }}</p>
+
+<div>
+    <p>Étudiants ayant payé : {{ summary.payes }}</p>
+    <p>Étudiants non payés : {{ summary.non_payes }}</p>
+    <p>Total des recettes : {{ summary.total_recettes }} USD</p>
+</div>
+
+<div style="margin-top: 20px;">
+  <a href="{{ url_for('inscription.generer_pdf') }}" class="btn-primary" target="_blank" rel="noopener">
+    Télécharger le PDF récapitulatif
+  </a>
+</div>
+
+{% if is_admin %}
+<h3>Gestion Admin des paiements</h3>
+<table class="table-default" style="margin-top: 20px;">
+<thead>
+    <tr><th>Étudiant</th><th>Actions</th></tr>
+</thead>
+<tbody>
+    {% for etudiant, statut in summary.detail.items() %}
+    <tr>
+        <td>{{ etudiant }}</td>
+        <td>
+            <form method="post" style="display:inline;">
+                <input type="hidden" name="etudiant" value="{{ etudiant }}">
+                {% if statut == "Payé" %}
+                <button name="action" value="MarquerNonPayé" class="btn-error">Marquer non payé</button>
+                {% else %}
+                <button name="action" value="MarquerPayé" class="btn-success">Marquer payé</button>
+                {% endif %}
+            </form>
+        </td>
+    </tr>
+    {% endfor %}
+</tbody>
+</table>
+{% endif %}
+
+{% endblock %}

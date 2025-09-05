@@ -37,29 +37,36 @@
 <section class="table-section table-scroll" style="max-width:900px; overflow-x:auto;">
 <table class="table-default">
     <thead>
-        <tr>
-            <th>Date</th>
-            <th>Catégorie</th>
-            <th>Description</th>
-            <th>Utilisateur</th>
-            <th class="montant">Montant (USD)</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for depense in depenses %}
-        <tr>
-            <td>{{ depense.Date or '-' }}</td>
-            <td>{{ depense.Categorie or '-' }}</td>
-            <td>{{ depense.Description or '-' }}</td>
-            <td>{{ depense.Utilisateur or '-' }}</td>
-            <td class="montant">{{ "%.2f"|format(depense.Montant|float) }} USD</td>
-        </tr>
-        {% else %}
-        <tr>
-            <td colspan="5" class="text-center">Aucune dépense enregistrée.</td>
-        </tr>
-        {% endfor %}
-    </tbody>
+    <tr>
+        <th>Nom Cours</th>
+        <th>Catégorie Dépense</th>
+        <th>Description</th>
+        <th>Montant (USD)</th>
+        <th>Nom Classe</th>
+        <th>Type Dépense</th>
+        <th>Commentaire</th>
+        <th>Date Dépense</th>
+    </tr>
+</thead>
+<tbody>
+    {% for depense in depenses %}
+    <tr>
+        <td>{{ depense.NomCours or '-' }}</td>
+        <td>{{ depense.CategorieDepense or '-' }}</td>
+        <td>{{ depense.Description or '-' }}</td>
+        <td>{{ "%.2f"|format(depense.Montant|float) }} USD</td>
+        <td>{{ depense.NomClasse or '-' }}</td>
+        <td>{{ depense.TypeDepense or '-' }}</td>
+        <td>{{ depense.Commentaire or '-' }}</td>
+        <td>{{ depense.DateDepense or '-' }}</td>
+    </tr>
+    {% else %}
+    <tr>
+        <td colspan="8" class="text-center">Aucune dépense enregistrée.</td>
+    </tr>
+    {% endfor %}
+</tbody>
+
 </table>
 </section>
 

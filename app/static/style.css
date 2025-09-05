@@ -1,14 +1,18 @@
 :root {
-    --primary-color: #036;
-    --secondary-color: #024872;
-    --success-color: #4CAF50;
-    --error-color: #f44336;
-    --warning-color: #ff9800;
-    --info-color: #2196F3;
-    --bg-color: #f9f9f9;
-    --font-color: #333;
+    --primary-color: #1E3A8A;          /* Bleu profond élégant */
+    --secondary-color: #2563EB;        /* Bleu vif pour hover/actif */
+    --success-color: #16A34A;          /* Vert succès moderne */
+    --error-color: #DC2626;            /* Rouge erreur plus lisible */
+    --warning-color: #F59E0B;          /* Orange chaleureux */
+    --info-color: #0EA5E9;             /* Bleu clair info */
+    --bg-color: #F3F4F6;               /* Gris clair neutre (fond) */
+    --font-color: #1F2937;             /* Gris foncé lisible */
+    --card-bg-color: #FFFFFF;          /* Fond clair cartes */
+    --card-shadow: rgba(0, 0, 0, 0.08);/* Ombre douce */
     --max-width-content: 1200px;
 }
+
+
 
 /* Base layout */
 html, body {
@@ -239,8 +243,84 @@ footer {
 }
 
 /* Dashboard */
-.dashboard-summary { margin-bottom: 30px; }
-.dashboard-summary h2 { font-size: 1.4em; margin-bottom: 16px; }
+.dashboard-summary {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr); /* Deux colonnes */
+  grid-template-rows: auto auto; /* Deux lignes */
+  gap: 20px 30px;
+  max-width: 900px;
+  margin: 2rem auto;
+  padding: 1rem;
+  box-sizing: border-box;
+}
+.dashboard-summary > div.recette {
+  background-color: #e8f5e9; /* Vert très clair */
+  color: #2e7d32;            /* Vert foncé */
+  border-left: 6px solid #4caf50;
+}
+
+.dashboard-summary > div.depense {
+  background-color: #ffebee; /* Rouge très clair */
+  color: #c62828;            /* Rouge foncé */
+  border-left: 6px solid #f44336;
+}
+
+.dashboard-summary > h2 {
+  grid-column: 1 / -1; /* Le solde occupe toute la largeur */
+  font-size: 1.6rem;
+  font-weight: bold;
+  color: var(--primary-color);
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  padding: 1rem;
+  box-shadow: 0 0 8px rgba(0,0,0,0.1);
+  text-align: center;
+  margin-bottom: 1rem;
+}
+
+.dashboard-summary > div {
+  background-color: #fff;
+  border-radius: 10px;
+  padding: 16px 24px;
+  box-shadow: 0 0 8px rgba(0,0,0,0.1);
+  transition: box-shadow 0.3s ease;
+  text-align: center;
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: var(--font-color);
+  overflow-wrap: break-word;
+  word-break: break-word;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.dashboard-summary > div:hover,
+.dashboard-summary > div:focus {
+  box-shadow: 0 0 15px rgba(0,0,0,0.15);
+  cursor: default;
+}
+
+.card-value {
+  margin-top: 8px;
+  font-size: 1.6rem;
+  font-weight: bold;
+}
+
+.solde-positif { color: var(--success-color); }
+.solde-negatif { color: var(--error-color); }
+
+/* Responsive : passage en une colonne */
+@media (max-width: 600px) {
+  .dashboard-summary {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto auto auto auto auto;
+  }
+  .dashboard-summary > h2 {
+    grid-column: auto;
+  }
+}
+
 .solde-positif { color: #0a7; font-weight: bold; }
 .solde-negatif { color: #c33; font-weight: bold; }
 .dashboard-cards {
@@ -482,3 +562,42 @@ footer {
 .btn-link:hover, .btn-link:focus {
     text-decoration: underline;
 }
+
+.btn-success {
+  background-color: #4CAF50;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+.btn-success:disabled {
+  background-color: #aaa;
+  cursor: not-allowed;
+  color: #666;
+}
+
+.table-default {
+  width: 100%;
+  min-width: 700px;
+  border-collapse: collapse;
+  table-layout: fixed;  /* utile pour gérer les largeurs */
+}
+
+.table-default th,
+.table-default td {
+  padding: 8px;
+  word-wrap: break-word;       /* ancien standard */
+  overflow-wrap: break-word;   /* standard moderne */
+  white-space: normal;         /* permet le retour à la ligne */
+  vertical-align: top;         /* aligne le texte en haut si plusieurs lignes */
+}
+
+.table-default th.text-right,
+.table-default td.text-right {
+  text-align: right;
+}
+
+.text-center { text-align: center; }

@@ -1,0 +1,22 @@
+# 1. Initialiser un dépôt Git local
+git init
+
+# 2. Ajouter tous les fichiers du projet au suivi Git
+git add .
+
+# 3. Faire un premier commit avec un message
+git commit -m "Initial commit - ajout projet Flask"
+
+# 4. Créer un dépôt distant sur GitHub
+# Aller sur GitHub dans l'interface web,
+# cliquer sur "New repository",
+# nommer le dépôt (ex: facultaire_cash_webapp),
+# choisir privé/public selon accès,
+# ne pas cocher init avec README pour éviter conflit.
+
+# 5. Connecter le dépôt local au dépôt distant GitHub
+git remote add origin https://github.com/votre-utilisateur/facultaire_cash_webapp.git
+
+# 6. Pousser le projet vers GitHub sur la branche principale (main)
+git branch -M main
+git push -u origin main

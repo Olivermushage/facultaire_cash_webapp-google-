@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+
+{% block title %}Sélection du type d'inscription{% endblock %}
+
+{% block content %}
+<h2>Choisissez le type d'inscription</h2>
+
+<form method="POST" class="form-default" style="max-width: 400px;">
+  <div class="form-group">
+    <label for="type_inscription">Type d'inscription :</label>
+    <select name="type_inscription" id="type_inscription" required class="input-default">
+      <option value="" disabled selected>-- Sélectionnez un type --</option>
+      <option value="1er_semestre" {% if request.form.get('type_inscription') == '1er_semestre' %}selected{% endif %}>Examens du premier semestre</option>
+      <option value="2nd_semestre" {% if request.form.get('type_inscription') == '2nd_semestre' %}selected{% endif %}>Examens du second semestre</option>
+      <option value="rattrapage" {% if request.form.get('type_inscription') == 'rattrapage' %}selected{% endif %}>Session de rattrapage</option>
+    </select>
+  </div>
+
+  <div class="form-actions">
+    <button type="submit" class="btn-primary">Suivant</button>
+  </div>
+</form>
+
+{% endblock %}

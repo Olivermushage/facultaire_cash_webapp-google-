@@ -3,163 +3,228 @@
 {% block title %}Historique des opérations{% endblock %}
 
 {% block content %}
-<h1>📜 Historique des opérations</h1>
+<h1 class="mb-20">📜 Historique des opérations</h1>
 
-<!-- Formulaire de recherche -->
+<!-- 🔎 Barre de recherche -->
 <form method="get" class="form-inline mb-20">
-    <input type="text" name="recherche" value="{{ request.args.get('recherche', '') }}"
-           placeholder="🔎 Rechercher..." class="input-search">
-    <button type="submit" class="btn-primary">Filtrer</button>
-    {% if request.args.get('recherche') %}
-        <a href="{{ url_for('historique') }}" class="btn-link">❌ Réinitialiser</a>
-    {% endif %}
+  <input type="text" name="recherche" value="{{ request.args.get('recherche', '') }}"
+         placeholder="Rechercher..." class="input-search">
+  <button type="submit" class="btn-primary">Filtrer</button>
+  {% if request.args.get('recherche') %}
+    <a href="{{ url_for('main.historique') }}" class="btn-link">❌ Réinitialiser</a>
+  {% endif %}
 </form>
 
-<!-- Section opérations en caisse -->
+<!-- 💰 Opérations en caisse -->
 <section class="mb-40">
-<h2>💰 Opérations en caisse</h2>
-<div class="table-scroll">
+  <h2>💰 Opérations en caisse</h2>
+  <div class="table-scroll">
     <table class="table-default">
-        <thead>
-            <tr>
-                <th>Date & heure</th>
-                <th>Utilisateur</th>
-                <th>Nom</th>
-                <th>Type</th>
-                <th>Montant (USD)</th>
-                <th>Description</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for op in operations %}
-            <tr>
-                <td>{{ op.date_heure or op.Date or '-' }}</td>
-                <td>{{ op.utilisateur or 'Inconnu' }}</td>
-                <td>{{ op.Nom or '-' }}</td>
-                <td>{{ op.Type or '-' }}</td>
-                <td>{{ "%.2f"|format(op.Montant) if op.Montant else "0.00" }}</td>
-                <td>{{ op.Description or '-' }}</td>
-            </tr>
-            {% else %}
-            <tr><td colspan="6" class="text-center">Aucune opération enregistrée.</td></tr>
-            {% endfor %}
-        </tbody>
+      <thead>
+        <tr>
+          <th style="width:130px;">Date & Heure</th>
+          <th style="width:120px;">Utilisateur</th>
+          <th style="width:150px;">Nom</th>
+          <th style="width:100px;">Type</th>
+          <th style="width:120px;" class="text-right">Montant (USD)</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for op in operations %}
+        <tr>
+          <td>{{ op.date_heure or op.Date or '-' }}</td>
+          <td>{{ op.utilisateur|default('Inconnu') }}</td>
+          <td>{{ op.Nom|default('-') }}</td>
+          <td>{{ op.Type|default('-') }}</td>
+          <td class="text-right">{{ "%.2f"|format(op.Montant or 0) }}</td>
+          <td>{{ op.Description|default('-') }}</td>
+        </tr>
+        {% else %}
+        <tr><td colspan="6" class="text-center">Aucune opération enregistrée.</td></tr>
+        {% endfor %}
+      </tbody>
     </table>
-</div>
+  </div>
 </section>
 
-<!-- Pagination -->
+<!-- 📄 Pagination -->
 <div class="pagination mb-40">
-    {% if page > 1 %}
-        <a href="{{ url_for('historique', page=page-1, recherche=request.args.get('recherche','')) }}">&laquo; Précédent</a>
-    {% else %}
-        <span class="disabled">&laquo; Précédent</span>
-    {% endif %}
-    <span>Page {{ page }} sur {{ total_pages }}</span>
-    {% if page < total_pages %}
-        <a href="{{ url_for('historique', page=page+1, recherche=request.args.get('recherche','')) }}">Suivant &raquo;</a>
-    {% else %}
-        <span class="disabled">Suivant &raquo;</span>
-    {% endif %}
+  {% if page > 1 %}
+    <a href="{{ url_for('main.historique', page=page-1, recherche=request.args.get('recherche','')) }}" class="btn-page">&laquo; Précédent</a>
+  {% else %}
+    <span class="btn-page disabled">&laquo; Précédent</span>
+  {% endif %}
+
+  <span class="mx-10">Page {{ page }} / {{ total_pages }}</span>
+
+  {% if page < total_pages %}
+    <a href="{{ url_for('main.historique', page=page+1, recherche=request.args.get('recherche','')) }}" class="btn-page">Suivant &raquo;</a>
+  {% else %}
+    <span class="btn-page disabled">Suivant &raquo;</span>
+  {% endif %}
 </div>
 
-<!-- Dépenses classiques -->
+<!-- 📊 Dépenses classiques -->
 <section class="mb-40">
-<h2>📊 Dépenses classiques</h2>
-<div class="table-scroll">
+  <h2>📊 Dépenses classiques</h2>
+  <div class="table-scroll">
     <table class="table-default">
-        <thead>
-            <tr>
-                <th>Nom Classe</th>
-                <th>Date</th>
-                <th>Catégorie</th>
-                <th>Description</th>
-                <th>Montant (USD)</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for dep in depenses_classiques %}
-            <tr>
-                <td>{{ dep.NomClasse or '-' }}</td>
-                <td>{{ dep.DateExamen or dep.DateDepense or '-' }}</td>
-                <td>{{ dep.CategorieDepense or '-' }}</td>
-                <td>{{ dep.Description or dep.Commentaire or '-' }}</td>
-                <td>{{ "%.2f"|format(dep.Montant) if dep.Montant else "0.00" }}</td>
-            </tr>
-            {% else %}
-            <tr><td colspan="5" class="text-center">Aucune dépense classique enregistrée.</td></tr>
-            {% endfor %}
-        </tbody>
+      <thead>
+        <tr>
+          <th>Classe</th>
+          <th>Date</th>
+          <th>Catégorie</th>
+          <th>Description</th>
+          <th class="text-right">Montant (USD)</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for dep in depenses_classiques %}
+        <tr>
+          <td>{{ dep.NomClasse|default('-') }}</td>
+          <td>{{ dep.DateExamen or dep.DateDepense or '-' }}</td>
+          <td>{{ dep.CategorieDepense|default('-') }}</td>
+          <td>{{ dep.Description or dep.Commentaire or '-' }}</td>
+          <td class="text-right">{{ "%.2f"|format(dep.Montant or 0) }}</td>
+        </tr>
+        {% else %}
+        <tr><td colspan="5" class="text-center">Aucune dépense classique enregistrée.</td></tr>
+        {% endfor %}
+      </tbody>
     </table>
-</div>
+  </div>
 </section>
 
-<!-- Dépenses travaux -->
+<!-- 🛠️ Dépenses travaux -->
 <section class="mb-40">
-<h2>🛠️ Dépenses liées aux travaux</h2>
-<div class="table-scroll">
+  <h2>🛠️ Dépenses liées aux travaux</h2>
+  <div class="table-scroll">
     <table class="table-default">
-        <thead>
-            <tr>
-                <th>Nom Classe</th>
-                <th>Étudiant</th>
-                <th>Catégorie Travail</th>
-                <th>Type Dépense</th>
-                <th>Commentaire</th>
-                <th>Date</th>
-                <th>Montant (USD)</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for dep in depenses_travaux %}
-            <tr>
-                <td>{{ dep.NomClasse or '-' }}</td>
-                <td>{{ dep.Etudiant or '-' }}</td>
-                <td>{{ dep.CategorieDepense or dep.CategorieTravail or '-' }}</td>
-                <td>{{ dep.TypeDepense or '-' }}</td>
-                <td>{{ dep.Commentaire or '-' }}</td>
-                <td>{{ dep.DateDepense or '-' }}</td>
-                <td>{{ "%.2f"|format(dep.Montant) if dep.Montant else "0.00" }}</td>
-            </tr>
-            {% else %}
-            <tr><td colspan="7" class="text-center">Aucune dépense liée aux travaux enregistrée.</td></tr>
-            {% endfor %}
-        </tbody>
+      <thead>
+        <tr>
+          <th>Classe</th>
+          <th>Étudiant</th>
+          <th>Catégorie</th>
+          <th>Type</th>
+          <th>Commentaire</th>
+          <th>Date</th>
+          <th class="text-right">Montant (USD)</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for dep in depenses_travaux %}
+        <tr>
+          <td>{{ dep.NomClasse|default('-') }}</td>
+          <td>{{ dep.Etudiant|default('-') }}</td>
+          <td>{{ dep.CategorieDepense or dep.CategorieTravail or '-' }}</td>
+          <td>{{ dep.TypeDepense|default('-') }}</td>
+          <td>{{ dep.Commentaire|default('-') }}</td>
+          <td>{{ dep.DateDepense|default('-') }}</td>
+          <td class="text-right">{{ "%.2f"|format(dep.Montant or 0) }}</td>
+        </tr>
+        {% else %}
+        <tr><td colspan="7" class="text-center">Aucune dépense liée aux travaux enregistrée.</td></tr>
+        {% endfor %}
+      </tbody>
     </table>
-</div>
+  </div>
 </section>
 
-<!-- Recettes -->
+<!-- 📈 Recettes -->
 <section class="mb-40">
-<h2>📈 Recettes</h2>
-<div class="table-scroll">
+  <h2>📈 Recettes</h2>
+  <div class="table-scroll">
     <table class="table-default">
-        <thead>
-            <tr>
-                <th>Date</th>
-                <th>Source</th>
-                <th>Type</th>
-                <th>Description</th>
-                <th>Montant (USD)</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for rec in recettes %}
-            <tr>
-                <td>{{ rec.Date or '-' }}</td>
-                <td>{{ rec.Source or '-' }}</td>
-                <td>{{ rec.Type or '-' }}</td>
-                <td>{{ rec.Description or '-' }}</td>
-                <td>{{ "%.2f"|format(rec.Montant) if rec.Montant else "0.00" }}</td>
-            </tr>
-            {% else %}
-            <tr><td colspan="5" class="text-center">Aucune recette enregistrée.</td></tr>
-            {% endfor %}
-        </tbody>
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Source</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th class="text-right">Montant (USD)</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for rec in recettes %}
+        <tr>
+          <td>{{ rec.Date|default('-') }}</td>
+          <td>{{ rec.Source|default('-') }}</td>
+          <td>{{ rec.Type|default('-') }}</td>
+          <td>{{ rec.Description|default('-') }}</td>
+          <td class="text-right">{{ "%.2f"|format(rec.Montant or 0) }}</td>
+        </tr>
+        {% else %}
+        <tr><td colspan="5" class="text-center">Aucune recette enregistrée.</td></tr>
+        {% endfor %}
+      </tbody>
     </table>
-</div>
+  </div>
 </section>
 
+<!-- 📋 Inscriptions -->
+<section class="mb-40">
+  <h2>📋 Inscriptions</h2>
+  <table class="table-default">
+    <thead>
+      <tr>
+        <th>Classe</th>
+        <th>Étudiant</th>
+        <th>Type</th>
+        <th>Statut</th>
+        <th class="text-right">Montant</th>
+        <th>Date</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for ins in inscriptions %}
+      <tr>
+        <td>{{ ins.NomClasse }}</td>
+        <td>{{ ins.Etudiant }}</td>
+        <td>{{ ins.TypeInscription }}</td>
+        <td>{{ ins.StatutPaiement }}</td>
+        <td class="text-right">{{ ins.Montant }}</td>
+        <td>{{ ins.DatePaiement }}</td>
+      </tr>
+      {% else %}
+      <tr><td colspan="6" class="text-center">Aucune inscription enregistrée.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+
+<!-- 📚 Paiements travaux -->
+<section class="mb-40">
+  <h2>📚 Paiements Travaux</h2>
+  <table class="table-default">
+    <thead>
+      <tr>
+        <th>Classe</th>
+        <th>Étudiant</th>
+        <th>Type</th>
+        <th>Statut</th>
+        <th class="text-right">Montant</th>
+        <th>Date</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for p in paiements_travaux %}
+      <tr>
+        <td>{{ p.NomClasse }}</td>
+        <td>{{ p.Etudiant }}</td>
+        <td>{{ p.TypeTravail }}</td>
+        <td>{{ p.StatutPaiement }}</td>
+        <td class="text-right">{{ p.Montant }}</td>
+        <td>{{ p.DatePaiement }}</td>
+      </tr>
+      {% else %}
+      <tr><td colspan="6" class="text-center">Aucun paiement travaux enregistré.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+
+<!-- 🔙 Retour -->
 <p class="mt-40">
   <a href="{{ url_for('main.index') }}" class="btn-link">⬅ Retour à l'accueil</a>
 </p>

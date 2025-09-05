@@ -3,44 +3,67 @@
 {% block title %}Accueil - ULPGL{% endblock %}
 
 {% block content %}
-<h1>🏫 Bienvenue sur l'application de gestion de la caisse facultaire ULPGL</h1>
+  <h1 class="text-2xl font-bold mb-6">
+    🏫 Bienvenue sur l'application de gestion de la caisse facultaire ULPGL
+  </h1>
 
-<section class="dashboard-summary">
-    <h2>💰 Solde actuel : 
-        <span class="{{ 'solde-negatif' if solde <= 0 else 'solde-positif' }}">
-            {{ solde }} USD
-        </span>
+  <section class="dashboard-summary">
+    <h2>
+      💰 Solde actuel :
+      <span class="{{ 'solde-negatif' if solde <= 0 else 'solde-positif' }}">
+        {{ solde }} USD
+      </span>
     </h2>
 
-    <div class="dashboard-cards">
-        <div class="card card-examen">
-            <strong>Dépenses liées aux examens</strong>
-            <p class="card-value">{{ total_depenses_examen }} USD</p>
-            <a href="{{ url_for('depenses.choisir_classe_examen') }}" class="btn-detail">Voir</a>
-        </div>
-        <div class="card card-autres">
-            <strong>Autres dépenses</strong>
-            <p class="card-value">{{ total_depenses_autres }} USD</p>
-            <a href="{{ url_for('depenses.liste_depenses_autres') }}" class="btn-detail">Voir</a>
-        </div>
+    <div class="recette">
+      Recettes normales
+      <span class="card-value">{{ total_recettes_normales }} USD</span>
     </div>
-</section>
 
-<!-- <section class="classes-summary">
+    <div class="recette">
+      Paiements inscriptions
+      <span class="card-value">{{ total_paiements_inscriptions }} USD</span>
+    </div>
+
+    <div class="recette">
+      Autres recettes
+      <span class="card-value">{{ total_autres_recettes }} USD</span>
+    </div>
+
+    <div class="recette">
+      Recettes travaux étudiants
+      <span class="card-value">{{ total_paiements_travaux }} USD</span>
+    </div>
+
+    <div class="depense">
+      Dépenses examens
+      <span class="card-value">{{ total_depenses_examen }} USD</span>
+    </div>
+
+    <div class="depense">
+      Autres dépenses
+      <span class="card-value">{{ total_depenses_autres }} USD</span>
+    </div>
+  </section>
+
+  {# Section classes désactivée pour l’instant #}
+  {#
+  <section class="classes-summary">
     <h2>📊 Classes et paiements par catégorie</h2>
 
     {% for info in classes_info %}
-    <article class="classe-card">
+      <article class="classe-card">
         <h3>{{ info.classe }} ({{ info.total_etudiants }} étudiants)</h3>
         <ul>
-            {% for cat, count in info.paiements_par_categorie.items() %}
+          {% for cat, count in info.paiements_par_categorie.items() %}
             <li><strong>{{ cat }}</strong> : {{ count }} étudiants</li>
-            {% endfor %}
+          {% endfor %}
         </ul>
         <a href="{{ url_for('classes.detail_classe', nom_classe=info.classe) }}" class="btn-primary">Voir détails</a>
-    </article>
+      </article>
     {% else %}
-    <p>Aucune classe enregistrée.</p>
+      <p>Aucune classe enregistrée.</p>
     {% endfor %}
-</section> -->
+  </section>
+  #}
 {% endblock %}

@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+
+{% block title %}Liste des étudiants - {{ nom_classe }}{% endblock %}
+
+{% block content %}
+  <h2>Étudiants de la classe {{ nom_classe }}</h2>
+
+  <input type="text" id="searchInput" placeholder="Rechercher un étudiant..." 
+         class="input-default" style="max-width:400px; margin-bottom:10px;">
+
+  {% if nom_classe %}
+  <div style="margin-bottom: 20px;">
+    <a href="{{ url_for('inscription.generer_pdf') }}" 
+       class="btn-primary" 
+       target="_blank" 
+       rel="noopener">
+      📄 Télécharger le PDF récapitulatif
+    </a>
+  </div>
+  {% endif %}
+
+  <table class="table-default etudiants-table">
+    <thead>
+      <tr>
+        <th>Étudiant</th>
+        <th>Action paiement</th>
+      </tr>
+    </thead>
+    <tbody id="studentsTable">
+      {% for etudiant, paiement in etudiants_paiements.items() %}
+        <tr>
+          <td>{{ etudiant }}</td>
+          <td>
+            {% if paiement == "Non payé" %}
+              <form method="POST" action="{{ url_for('inscription.enregistrer_paiement') }}" style="margin:0;">
+                <input type="hidden" name="etudiant" value="{{ etudiant }}">
+                <button type="submit" class="btn-success">Enregistrer paiement</button>
+              </form>
+            {% else %}
+              <button class="btn-error" disabled>Paiement enregistré</button>
+            {% endif %}
+          </td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <script>
+    const searchInput = document.getElementById('searchInput');
+    const studentsTable = document.getElementById('studentsTable');
+
+    searchInput.addEventListener('keyup', function() {
+      const filter = this.value.toLowerCase();
+      const rows = studentsTable.getElementsByTagName('tr');
+      for (let i = 0; i < rows.length; i++) {
+        const studentName = rows[i].getElementsByTagName('td')[0].textContent.toLowerCase();
+        rows[i].style.display = studentName.includes(filter) ? '' : 'none';
+      }
+    });
+  </script>
+{% endblock %}

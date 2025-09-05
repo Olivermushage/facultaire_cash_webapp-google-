@@ -4,10 +4,10 @@
   <div class="form-default">
     <h1 class="text-xl font-bold mb-4">Sélectionner une classe</h1>
 
-    <form method="post" action="{{ url_for('inscription.selection_classe') }}">
+    <form method="post" action="{{ url_for('travaux.selection_classe') }}">
       <div class="form-group">
         <label for="classe" class="label-default">Classe :</label>
-        <select name="classe" id="classe" class="input-default" required>
+        <select id="classe" name="classe" class="input-default" required>
           <option value="" disabled selected>Choisissez une classe</option>
           {% for classe in classes %}
             <option value="{{ classe }}">{{ classe }}</option>
@@ -16,7 +16,7 @@
       </div>
 
       <div class="form-actions">
-        <button type="submit" class="btn-primary">✅ Soumettre</button>
+        <button type="submit" class="btn-primary">➡ Suivant</button>
       </div>
     </form>
   </div>

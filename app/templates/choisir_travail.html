@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Choisir un travail et enregistrer un paiement</h1>
+
+<form method="post" action="{{ url_for('travaux.choisir_travail') }}">
+    <label for="classe">Classe :</label>
+    <select id="classe" name="classe" required>
+        <option value="" disabled selected>Choisissez une classe</option>
+        {% for classe in classes %}
+        <option value="{{ classe }}">{{ classe }}</option>
+        {% endfor %}
+    </select>
+
+    <label for="type_travail">Type de travail :</label>
+    <select id="type_travail" name="type_travail" required>
+        <option value="" disabled selected>Choisissez un type de travail</option>
+        {% for type, montant in types_travaux %}
+        <option value="{{ type }}">{{ type }} - {{ montant }} USD</option>
+        {% endfor %}
+    </select>
+
+    <label for="etudiant">Nom de l'étudiant :</label>
+    <input type="text" id="etudiant" name="etudiant" required>
+
+    <button type="submit">Enregistrer le paiement</button>
+</form>
+{% endblock %}

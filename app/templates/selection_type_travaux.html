@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <div class="form-default">
+    <h1 class="text-xl font-bold mb-4">Choisir un type de travail</h1>
+
+    <form method="post" action="{{ url_for('travaux.selection_type') }}">
+      <div class="form-group">
+        <label for="type_travail" class="label-default">Type de travail :</label>
+        <select id="type_travail" name="type_travail" class="input-default" required>
+          <option value="" disabled selected>Choisissez un type de travail</option>
+          {% for type in types %}
+            <option value="{{ type }}">{{ type }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="form-actions">
+        <button type="submit" class="btn-primary">➡ Suivant</button>
+      </div>
+    </form>
+  </div>
+{% endblock %}
